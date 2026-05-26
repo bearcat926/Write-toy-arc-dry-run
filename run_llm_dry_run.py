@@ -1,6 +1,6 @@
 """
 LLM-driven 3-chapter toy arc dry run.
-Runs NovelFlow with real LLM to verify the full pipeline.
+Uses NovelFlow function (no CrewAI Flow, direct orchestration).
 """
 import json
 import os
@@ -14,29 +14,7 @@ os.environ["OPENAI_API_KEY"] = "REDACTED_API_KEY"
 sys.path.insert(0, str(Path(__file__).parent / "src"))
 
 from novel_workflow.project_init import init_project
-from novel_workflow.crewai.flow import NovelFlow, NovelFlowState
-from novel_workflow.crewai.tools import write_draft, write_review, write_proposal
-
-# Debug: verify tool instances
-print(f"[DEBUG] write_draft type: {type(write_draft)}, name: {write_draft.name}")
-print(f"[DEBUG] write_review type: {type(write_review)}, name: {write_review.name}")
-print(f"[DEBUG] write_proposal type: {type(write_proposal)}, name: {write_proposal.name}")
-print(f"[DEBUG] write_draft result_as_answer: {getattr(write_draft, 'result_as_answer', 'N/A')}")
-
-# Test tool directly
-print(f"\n[DEBUG] Direct tool test...")
-test_root = Path(__file__).parent / "toy_project_llm"
-test_root.mkdir(exist_ok=True)
-(test_root / "test_dir").mkdir(exist_ok=True)
-
-import novel_workflow.crewai.tools as tools_mod
-tools_mod.PROJECT_ROOT = test_root
-
-result = write_draft.run(path="test_dir/test.md", content="# Test\nHello")
-print(f"[DEBUG] Direct tool result: {result}")
-print(f"[DEBUG] File exists: {(test_root / 'test_dir/test.md').exists()}")
-if (test_root / 'test_dir/test.md').exists():
-    print(f"[DEBUG] File content: {(test_root / 'test_dir/test.md').read_text(encoding='utf-8')[:50]}")
+from novel_workflow.crewai.flow import run_novel_flow
 
 
 def setup_project(root: Path):
@@ -95,19 +73,44 @@ An ordinary person discovers extraordinary courage when faced with impossible ch
         "foreshadowing_entries": [],
     }, indent=2))
 
-    # Create arc directory
-    arc_dir = root / "arcs" / "arc_001"
-    for d in ["drafts", "reviews", "proposals", "reports", "gates", "checkpoints", "archive"]:
-        (arc_dir / d).mkdir(parents=True, exist_ok=True)
-
-    # Create gates directory
-    (root / "gates").mkdir(parents=True, exist_ok=True)
-
     print(f"Project initialized at {root}")
 
 
-def run_dry_run():
-    """Run the full 3-chapter toy arc with real LLM."""
+def verify_results(root: Path):
+    """Verify all expected artifacts exist."""
+    print("\n" + "="*60)
+    print("Verifying results...")
+    print("="*60 + "\n")
+
+    # Check canon/manuscript
+    manuscript = root / "canon" / "manuscript"
+    if manuscript.exists():
+        chapters = list(manuscript.glob("ch_*.md"))
+        print(f"canon/manuscript: {len(chapters)} chapters")
+        for ch in sorted(chapters):
+            content = ch.read_text(encoding="utf-8", errors="replace")
+            print(f"  {ch.name}: {len(content)} chars")
+    else:
+        print("WARNING: canon/manuscript/ missing")
+
+    # Check ledgers
+    for ledger_file in (root / "ledgers").glob("*.json"):
+        data = json.loads(ledger_file.read_text(encoding="utf-8"))
+        entries = data.get("events", data.get("timeline_entries",
+                        data.get("character_knowledge_entries",
+                        data.get("foreshadowing_entries", []))))
+        print(f"{ledger_file.name}: {len(entries)} entries")
+
+    # Check apply record
+    apply_record = root / "arcs" / "arc_001" / "reports" / "apply_record.json"
+    if apply_record.exists():
+        record = json.loads(apply_record.read_text(encoding="utf-8"))
+        print(f"Apply record: {record.get('result')}")
+    else:
+        print("WARNING: No apply record found")
+
+
+if __name__ == "__main__":
     root = (Path(__file__).parent / "toy_project_llm").resolve()
     setup_project(root)
 
@@ -115,40 +118,10 @@ def run_dry_run():
     print("Starting NovelFlow with real LLM...")
     print("="*60 + "\n")
 
-    state = NovelFlowState(
+    result = run_novel_flow(
+        project_root=str(root),
         arc_id="arc_001",
         chapters_total=3,
-        project_root=str(root),
     )
 
-    flow = NovelFlow(state=state)
-    flow.kickoff()
-
-    print("\n" + "="*60)
-    print("NovelFlow complete! Checking results...")
-    print("="*60 + "\n")
-
-    # Verify results
-    manuscript_dir = root / "canon" / "manuscript"
-    if manuscript_dir.exists():
-        for f in sorted(manuscript_dir.glob("*.md")):
-            content = f.read_text()
-            print(f"\n--- {f.name} ({len(content)} chars) ---")
-            print(content[:200] + "..." if len(content) > 200 else content)
-
-    # Check ledgers
-    for ledger_file in (root / "ledgers").glob("*.json"):
-        data = json.loads(ledger_file.read_text())
-        entries = data.get("events", data.get("timeline_entries", data.get("character_knowledge_entries", data.get("foreshadowing_entries", []))))
-        print(f"\n{ledger_file.name}: {len(entries)} entries")
-
-    # Check apply record
-    apply_record = root / "arcs" / "arc_001" / "reports" / "apply_record.json"
-    if apply_record.exists():
-        print(f"\nApply record: {apply_record.read_text()[:200]}")
-    else:
-        print("\nWARNING: No apply record found!")
-
-
-if __name__ == "__main__":
-    run_dry_run()
+    verify_results(root)
