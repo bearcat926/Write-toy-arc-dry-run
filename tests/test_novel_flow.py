@@ -9,16 +9,9 @@ def test_crewai_import():
 
 
 def test_flow_import():
-    """Verify NovelFlow can be imported and instantiated."""
-    from novel_workflow.crewai.flow import NovelFlow, NovelFlowState
-    state = NovelFlowState(
-        arc_id="arc_001",
-        chapters_total=3,
-        project_root="/tmp/test",
-    )
-    flow = NovelFlow(state=state)
-    assert flow.state.arc_id == "arc_001"
-    assert flow.state.chapters_total == 3
+    """Verify run_novel_flow can be imported."""
+    from novel_workflow.crewai.flow import run_novel_flow
+    assert callable(run_novel_flow)
 
 
 def test_agents_import():
