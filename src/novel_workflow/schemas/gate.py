@@ -16,7 +16,7 @@ class GateRecord(SchemaVersioned, Timestamped):
     @field_validator("author_input_evidence")
     @classmethod
     def evidence_not_empty_when_approved(cls, v: str, info) -> str:
-        if info.data.get("decision") == "approved" and (not v or not v.strip()):
+        if info.data.get("decision") == "approved" and not v:
             raise ValueError("author_input_evidence required for approved gate")
         return v
 
