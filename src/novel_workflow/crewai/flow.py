@@ -29,6 +29,9 @@ class NovelFlow(Flow[NovelFlowState]):
         """Initialize arc_working_state from canon/ledgers."""
         root = Path(self.state.project_root)
         tools_module.PROJECT_ROOT = root
+        # Set environment variable for thread-safe access
+        import os
+        os.environ["NOVEL_WORKFLOW_PROJECT_ROOT"] = str(root.resolve())
 
         for d in ["drafts", "reviews", "proposals", "reports", "gates", "checkpoints", "archive"]:
             (root / "arcs" / self.state.arc_id / d).mkdir(parents=True, exist_ok=True)

@@ -1,10 +1,20 @@
 import json
+import os
 import re
 from pathlib import Path
 from crewai.tools import BaseTool
 from pydantic import BaseModel, Field
 from ..guards.path_safety import PathSafetyGuard
 from ..schemas.proposal import LedgerUpdateProposal
+
+
+def _get_project_root() -> Path:
+    """Get PROJECT_ROOT from environment variable (thread-safe) or global default."""
+    env_root = os.environ.get("NOVEL_WORKFLOW_PROJECT_ROOT")
+    if env_root:
+        return Path(env_root)
+    return PROJECT_ROOT
+
 
 # Set at runtime by NovelFlow before dispatching agents
 PROJECT_ROOT = Path(".")
@@ -21,20 +31,14 @@ class WriteDraftTool(BaseTool):
     args_schema: type[BaseModel] = WriteDraftInput
 
     def _run(self, path: str, content: str) -> str:
-        import sys
-        guard = PathSafetyGuard(PROJECT_ROOT)
+        project_root = _get_project_root()
+        guard = PathSafetyGuard(project_root)
         resolved = guard.check_write_path(path, "agent")
-        resolved = resolved.resolve()  # Ensure absolute path
+        resolved = resolved.resolve()
         resolved.parent.mkdir(parents=True, exist_ok=True)
         with open(resolved, "w", encoding="utf-8") as f:
             f.write(content)
             f.flush()
-        # Verify write
-        if resolved.exists():
-            size = resolved.stat().st_size
-            print(f"[TOOL] Successfully wrote {size} bytes to {resolved}", file=sys.stderr)
-        else:
-            print(f"[TOOL] WARNING: File not found after write: {resolved}", file=sys.stderr)
         return f"Wrote draft to {resolved}"
 
 
@@ -49,7 +53,8 @@ class WriteReviewTool(BaseTool):
     args_schema: type[BaseModel] = WriteReviewInput
 
     def _run(self, path: str, content: str) -> str:
-        guard = PathSafetyGuard(PROJECT_ROOT)
+        project_root = _get_project_root()
+        guard = PathSafetyGuard(project_root)
         resolved = guard.check_write_path(path, "agent")
         resolved = resolved.resolve()
         resolved.parent.mkdir(parents=True, exist_ok=True)
@@ -70,7 +75,8 @@ class WriteProposalTool(BaseTool):
     args_schema: type[BaseModel] = WriteProposalInput
 
     def _run(self, path: str, content: str) -> str:
-        guard = PathSafetyGuard(PROJECT_ROOT)
+        project_root = _get_project_root()
+        guard = PathSafetyGuard(project_root)
         resolved = guard.check_write_path(path, "agent")
         resolved = resolved.resolve()
         # Clean markdown code block wrappers
