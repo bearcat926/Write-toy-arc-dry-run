@@ -11,6 +11,24 @@ class LedgerDiffGenerator:
             op = p["operation"]
             change = p["proposed_change"]
 
+            if ledger == "timeline" and op == "correction":
+                operations.append({
+                    "type": "correction",
+                    "target_ledger": ledger,
+                    "operation": op,
+                    "data": {**change, "corrects_event_id": change.get("corrects_event_id", change.get("event_id", ""))},
+                })
+                continue
+
+            if ledger == "character_knowledge" and op == "mark_corrected":
+                operations.append({
+                    "type": "mark_corrected",
+                    "target_ledger": ledger,
+                    "operation": op,
+                    "data": {**change, "corrects_previous": True},
+                })
+                continue
+
             if ledger == "foreshadowing":
                 fs_id = change.get("foreshadow_id", "")
                 status_from = change.get("status_from")

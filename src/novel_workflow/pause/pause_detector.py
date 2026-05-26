@@ -10,6 +10,7 @@ class EmergencyPauseDetector:
             affected_artifacts=[path],
             evidence=f"Path: {path}",
             recommended_action="Fix path and retry",
+            author_options=["A) Fix the issue and retry", "D) Archive current arc"],
         )
 
     def detect_pov_violation(self, character_id: str, knowledge: str) -> PauseReport:
@@ -19,6 +20,7 @@ class EmergencyPauseDetector:
             affected_artifacts=[],
             evidence=f"Character {character_id} should not know {knowledge}",
             recommended_action="Review character knowledge boundaries",
+            author_options=["A) Modify draft", "B) Modify arc_contract", "C) Mark as intentional, continue"],
         )
 
     def detect_quality_issue(self, issue_type: str, chapter: str) -> PauseReport:
@@ -28,4 +30,5 @@ class EmergencyPauseDetector:
             affected_artifacts=[chapter],
             evidence="",
             recommended_action="Review and revise",
+            author_options=["A) Revise", "C) Accept and continue"],
         )

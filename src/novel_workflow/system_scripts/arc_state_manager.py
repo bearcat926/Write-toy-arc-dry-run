@@ -44,3 +44,17 @@ class ArcWorkingStateManager:
             elif state_id in entry.get("depends_on", []):
                 entry["status"] = "invalidated_by_rejected_dependency"
         self._save(arc_id, aws)
+
+    def mark_chapters_rejected(self, arc_id: str, chapter_ids: list[str]):
+        aws = self._load(arc_id)
+        rejected_ids = {
+            entry["state_id"]
+            for entry in aws["entries"]
+            if entry["source_chapter"] in chapter_ids
+        }
+        for entry in aws["entries"]:
+            if entry["source_chapter"] in chapter_ids:
+                entry["status"] = "rejected"
+            elif any(dep in rejected_ids for dep in entry.get("depends_on", [])):
+                entry["status"] = "invalidated_by_rejected_dependency"
+        self._save(arc_id, aws)

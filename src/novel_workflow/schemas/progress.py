@@ -16,3 +16,4 @@ class PauseReport(SchemaVersioned, Timestamped):
     affected_artifacts: list[str] = []
     evidence: str = ""
     recommended_action: str = ""
+    author_options: list[str] = []

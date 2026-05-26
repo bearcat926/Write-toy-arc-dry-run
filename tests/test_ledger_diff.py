@@ -35,3 +35,29 @@ def test_foreshadow_invalid_transition():
     ]
     with pytest.raises(ValueError, match="INVALID_FORESHADOW_TRANSITION"):
         gen.generate(proposals)
+
+
+def test_timeline_correction():
+    gen = LedgerDiffGenerator()
+    proposals = [
+        {"target_ledger": "timeline", "operation": "correction",
+         "proposed_change": {"event_id": "e1_cor", "corrects_event_id": "e1", "summary": "A arrives late"}},
+    ]
+    diff = gen.generate(proposals)
+    assert len(diff["operations"]) == 1
+    op = diff["operations"][0]
+    assert op["type"] == "correction"
+    assert op["data"]["corrects_event_id"] == "e1"
+
+
+def test_character_knowledge_mark_corrected():
+    gen = LedgerDiffGenerator()
+    proposals = [
+        {"target_ledger": "character_knowledge", "operation": "mark_corrected",
+         "proposed_change": {"character_id": "char_a", "knowledge": "old info", "new_knowledge": "corrected info"}},
+    ]
+    diff = gen.generate(proposals)
+    assert len(diff["operations"]) == 1
+    op = diff["operations"][0]
+    assert op["type"] == "mark_corrected"
+    assert op["data"]["corrects_previous"] is True

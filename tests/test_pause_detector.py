@@ -18,3 +18,17 @@ def test_weak_hook_is_soft_warning():
     det = EmergencyPauseDetector()
     report = det.detect_quality_issue("weak_hook", "ch_001")
     assert report.pause_type == PauseType.SOFT_WARNING
+
+
+def test_hard_pause_has_options():
+    det = EmergencyPauseDetector()
+    report = det.detect_path_violation("PATH_TRAVERSAL_REJECTED", "../../../etc/passwd")
+    assert len(report.author_options) > 0
+    assert any("Fix" in o for o in report.author_options)
+    assert any("Archive" in o for o in report.author_options)
+
+
+def test_creative_review_allows_continue():
+    det = EmergencyPauseDetector()
+    report = det.detect_pov_violation("char_a", "secret_x")
+    assert any("Mark as intentional" in o for o in report.author_options)
