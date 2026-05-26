@@ -108,7 +108,7 @@ An ordinary person discovers extraordinary courage when faced with impossible ch
 
 def run_dry_run():
     """Run the full 3-chapter toy arc with real LLM."""
-    root = Path(__file__).parent / "toy_project_llm"
+    root = (Path(__file__).parent / "toy_project_llm").resolve()
     setup_project(root)
 
     print("\n" + "="*60)
