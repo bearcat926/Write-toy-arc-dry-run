@@ -1,0 +1,8 @@
+{
+  "created_at": "2026-05-26 15:54:53.345190+00:00",
+  "schema_version": "1.0",
+  "arc_id": "arc_001",
+  "ledger_diff_hash": "5f2e21ae75d072d18609cd987b784e4bba117ca41eef3b85224df2aeaa0f3f39",
+  "canon_diff_hash": "",
+  "result": "success"
+}

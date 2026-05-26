@@ -65,7 +65,7 @@ class NovelFlow(Flow[NovelFlowState]):
 
             # Auditor
             draft_path = root / "arcs" / self.state.arc_id / "drafts" / f"{ch_id}.md"
-            draft_content = draft_path.read_text() if draft_path.exists() else "(no draft)"
+            draft_content = draft_path.read_text(encoding="utf-8", errors="replace") if draft_path.exists() else "(no draft)"
             print(f"[NovelFlow] Auditor starting...")
             auditor.kickoff(
                 f"Review chapter {ch_id} for continuity issues.\n\n"
@@ -76,7 +76,7 @@ class NovelFlow(Flow[NovelFlowState]):
 
             # Extractor
             review_path = root / "arcs" / self.state.arc_id / "reviews" / f"{ch_id}_review.md"
-            review_content = review_path.read_text() if review_path.exists() else "(no review)"
+            review_content = review_path.read_text(encoding="utf-8", errors="replace") if review_path.exists() else "(no review)"
             print(f"[NovelFlow] Extractor starting...")
             extractor.kickoff(
                 f"Extract narrative facts from chapter {ch_id}.\n\n"
@@ -103,7 +103,7 @@ class NovelFlow(Flow[NovelFlowState]):
         for ch_id in self.state.chapter_results:
             proposal_path = root / "arcs" / arc_id / "proposals" / f"{ch_id}_ledger_update_proposal.json"
             if proposal_path.exists():
-                data = json.loads(proposal_path.read_text())
+                data = json.loads(proposal_path.read_text(encoding="utf-8", errors="replace"))
                 if isinstance(data, list):
                     all_proposals.extend(data)
                 else:
@@ -137,19 +137,19 @@ class NovelFlow(Flow[NovelFlowState]):
 
         canon_outline = root / "canon" / "approved_outline.md"
         if canon_outline.exists():
-            parts.append(f"## Approved Outline\n{canon_outline.read_text()}")
+            parts.append(f"## Approved Outline\n{canon_outline.read_text(encoding='utf-8', errors='replace')}")
 
         for ledger_file in (root / "ledgers").glob("*.json"):
-            parts.append(f"## Ledger: {ledger_file.stem}\n{ledger_file.read_text()}")
+            parts.append(f"## Ledger: {ledger_file.stem}\n{ledger_file.read_text(encoding='utf-8', errors='replace')}")
 
         aws_path = root / "arcs" / self.state.arc_id / "arc_working_state.json"
         if aws_path.exists():
-            parts.append(f"## Arc Working State\n{aws_path.read_text()}")
+            parts.append(f"## Arc Working State\n{aws_path.read_text(encoding='utf-8', errors='replace')}")
 
         for prev_ch in range(1, int(ch_id.split("_")[1])):
             prev_path = root / "arcs" / self.state.arc_id / "drafts" / f"ch_{prev_ch:03d}.md"
             if prev_path.exists():
-                parts.append(f"## Previous Chapter ch_{prev_ch:03d}\n{prev_path.read_text()}")
+                parts.append(f"## Previous Chapter ch_{prev_ch:03d}\n{prev_path.read_text(encoding='utf-8', errors='replace')}")
 
         return "\n\n".join(parts) if parts else "(empty project)"
 
@@ -162,7 +162,7 @@ class NovelFlow(Flow[NovelFlowState]):
             print(f"[NovelFlow] No proposal for {ch_id}, skipping merge")
             return
 
-        data = json.loads(proposal_path.read_text())
+        data = json.loads(proposal_path.read_text(encoding="utf-8", errors="replace"))
         proposals = data if isinstance(data, list) else [data]
 
         for p_data in proposals:
