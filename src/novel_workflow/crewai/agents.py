@@ -4,12 +4,16 @@ from .tools import write_draft, write_review, write_proposal
 
 
 def _create_llm() -> LLM:
-    return LLM(
+    llm = LLM(
         model=f"openai/{LLM_MODEL}",
         base_url=LLM_BASE_URL,
         api_key=LLM_API_KEY,
         max_tokens=32000,
     )
+    # Force function calling support for custom OpenAI-compatible endpoints
+    # litellm doesn't know about custom model names, so we override
+    llm.supports_function_calling = lambda: True
+    return llm
 
 
 def create_writer() -> Agent:
