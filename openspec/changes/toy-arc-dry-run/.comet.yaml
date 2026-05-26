@@ -1,0 +1,14 @@
+workflow: full
+phase: build
+build_mode: null
+isolation: null
+verify_mode: null
+design_doc: docs/superpowers/specs/2026-05-26-toy-arc-dry-run-design.md
+plan: null
+verify_result: pending
+verification_report: null
+branch_status: pending
+verified_at: null
+archived: false
+handoff_context: openspec/changes/toy-arc-dry-run/.comet/handoff/design-context.json
+handoff_hash: 0f9d4abbf277dd0b2c9b21397ec95c1a7ec0ab463a9cf8140dee2d9ba95045b6

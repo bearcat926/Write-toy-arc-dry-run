@@ -1,0 +1,18 @@
+{
+  "change": "toy-arc-dry-run",
+  "phase": "design",
+  "mode": "compact",
+  "canonical_spec": "openspec",
+  "generated_by": "comet-handoff.sh",
+  "context_hash": "0f9d4abbf277dd0b2c9b21397ec95c1a7ec0ab463a9cf8140dee2d9ba95045b6",
+  "files": [
+    { "path": "openspec/changes/toy-arc-dry-run/proposal.md", "sha256": "08c2d07b4efb942091caa717b94b39936f4a56bfc5e2adfa71cd96dad8b2fd41" },
+    { "path": "openspec/changes/toy-arc-dry-run/design.md", "sha256": "13e2f137e79ffda6eaa9ff64629e838830612e3c8a09945d0ac6971095434c72" },
+    { "path": "openspec/changes/toy-arc-dry-run/tasks.md", "sha256": "5938cc98056d56efe4b3b0248bb9085b8a420f7c2e791a423f446b4fe91bc6f0" },
+    { "path": "openspec/changes/toy-arc-dry-run/specs/arc-state-management/spec.md", "sha256": "86ea0e505f69dff3bbaea5b5f87cb67f6c0be8159581d11b72f247cca51c5c5b" },
+    { "path": "openspec/changes/toy-arc-dry-run/specs/control-plane/spec.md", "sha256": "e586a80557448d1fc207a764d0cd2648700abda3d7b5a9a12ca1562133c2dabe" },
+    { "path": "openspec/changes/toy-arc-dry-run/specs/dry-run-fixtures/spec.md", "sha256": "e597664961bb11a98eb4bc4aa88d64e3168d276460c782b082923aae5eff1f4b" },
+    { "path": "openspec/changes/toy-arc-dry-run/specs/file-protocol/spec.md", "sha256": "e78c31ce9f24f96fc2fdae2ebeffbeec39b57dd58aae5ba6e5d1d2fa3ac4e4b9" },
+    { "path": "openspec/changes/toy-arc-dry-run/specs/ledger-system/spec.md", "sha256": "5cb6268959a50b9b67b83df53c8cdc049984ce6eddc5d456a141f123f3696a5e" }
+  ]
+}

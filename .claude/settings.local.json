@@ -1,0 +1,41 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(rm -rf \"C:/Users/18622/.claude/plugins/marketplaces/caveman/\" && echo \"marketplaces/caveman deleted\")",
+      "Bash(rm -rf \"C:/Users/18622/.claude/plugins/cache/caveman/\" && echo \"cache/caveman deleted\")",
+      "Bash(mkdir -p \"C:/Users/18622/.claude/backups/skill-cleanup-$\\(date +%Y%m%d-%H%M%S\\)\")",
+      "Read(//c/Users/18622/.claude/backups/**)",
+      "Bash(rm -rf \"C:/Users/18622/.claude/plugins/marketplaces/buildwithclaude\" && echo \"buildwithclaude deleted\")",
+      "Bash(rm -rf \"C:/Users/18622/.claude/plugins/marketplaces/everything-claude-code\" && echo \"everything-claude-code deleted\")",
+      "Bash(rm -rf \"C:/Users/18622/.claude/plugins/marketplaces/ralph-marketplace\" && echo \"ralph-marketplace deleted\")",
+      "Bash(rm -rf \"C:/Users/18622/.claude/skills/durable-task-runner-master\" && echo \"durable-task-runner-master deleted\")",
+      "Bash(rm -f \"C:/Users/18622/.claude/.caveman-active\" && echo \".caveman-active deleted\")",
+      "Skill(superpowers:executing-plans)",
+      "Skill(superpowers:executing-plans:*)",
+      "Skill(superpowers:verification-before-completion)",
+      "Skill(superpowers:verification-before-completion:*)"
+    ],
+    "additionalDirectories": [
+      "C:\\Users\\18622\\.claude\\plugins\\marketplaces\\caveman",
+      "C:\\Users\\18622\\.claude\\plugins\\cache\\caveman",
+      "C:\\Users\\18622\\.claude\\plugins\\marketplaces\\buildwithclaude",
+      "C:\\Users\\18622\\.claude\\plugins\\marketplaces\\everything-claude-code",
+      "C:\\Users\\18622\\.claude\\plugins\\marketplaces\\ralph-marketplace",
+      "C:\\Users\\18622\\.claude\\skills\\durable-task-runner-master",
+      "C:\\Users\\18622\\.claude"
+    ]
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Read",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "claudectx watch --log-stdin"
+          }
+        ]
+      }
+    ]
+  }
+}
