@@ -24,11 +24,15 @@ class WriteDraftTool(BaseTool):
         import sys
         guard = PathSafetyGuard(PROJECT_ROOT)
         resolved = guard.check_write_path(path, "agent")
+        resolved = resolved.resolve()  # Ensure absolute path
         resolved.parent.mkdir(parents=True, exist_ok=True)
-        resolved.write_text(content, encoding="utf-8")
+        with open(resolved, "w", encoding="utf-8") as f:
+            f.write(content)
+            f.flush()
         # Verify write
         if resolved.exists():
-            print(f"[TOOL] Successfully wrote {len(content)} chars to {resolved}", file=sys.stderr)
+            size = resolved.stat().st_size
+            print(f"[TOOL] Successfully wrote {size} bytes to {resolved}", file=sys.stderr)
         else:
             print(f"[TOOL] WARNING: File not found after write: {resolved}", file=sys.stderr)
         return f"Wrote draft to {resolved}"
@@ -47,8 +51,11 @@ class WriteReviewTool(BaseTool):
     def _run(self, path: str, content: str) -> str:
         guard = PathSafetyGuard(PROJECT_ROOT)
         resolved = guard.check_write_path(path, "agent")
+        resolved = resolved.resolve()
         resolved.parent.mkdir(parents=True, exist_ok=True)
-        resolved.write_text(content, encoding="utf-8")
+        with open(resolved, "w", encoding="utf-8") as f:
+            f.write(content)
+            f.flush()
         return f"Wrote review to {resolved}"
 
 
@@ -65,6 +72,7 @@ class WriteProposalTool(BaseTool):
     def _run(self, path: str, content: str) -> str:
         guard = PathSafetyGuard(PROJECT_ROOT)
         resolved = guard.check_write_path(path, "agent")
+        resolved = resolved.resolve()
         # Clean markdown code block wrappers
         cleaned = content.strip()
         cleaned = re.sub(r'^```(?:json)?\s*\n?', '', cleaned)
@@ -73,11 +81,14 @@ class WriteProposalTool(BaseTool):
         data = json.loads(cleaned)
         LedgerUpdateProposal.model_validate(data)
         resolved.parent.mkdir(parents=True, exist_ok=True)
-        resolved.write_text(json.dumps(data, indent=2, ensure_ascii=False), encoding="utf-8")
+        with open(resolved, "w", encoding="utf-8") as f:
+            f.write(json.dumps(data, indent=2, ensure_ascii=False))
+            f.flush()
         return f"Wrote proposal to {resolved}"
 
 
-# Export tool instances
-write_draft = WriteDraftTool()
-write_review = WriteReviewTool()
-write_proposal = WriteProposalTool()
+# Export tool instances with result_as_answer=True
+# This ensures CrewAI Agent uses tool output as the task result
+write_draft = WriteDraftTool(result_as_answer=True)
+write_review = WriteReviewTool(result_as_answer=True)
+write_proposal = WriteProposalTool(result_as_answer=True)
