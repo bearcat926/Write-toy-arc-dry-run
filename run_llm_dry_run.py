@@ -15,6 +15,28 @@ sys.path.insert(0, str(Path(__file__).parent / "src"))
 
 from novel_workflow.project_init import init_project
 from novel_workflow.crewai.flow import NovelFlow, NovelFlowState
+from novel_workflow.crewai.tools import write_draft, write_review, write_proposal
+
+# Debug: verify tool instances
+print(f"[DEBUG] write_draft type: {type(write_draft)}, name: {write_draft.name}")
+print(f"[DEBUG] write_review type: {type(write_review)}, name: {write_review.name}")
+print(f"[DEBUG] write_proposal type: {type(write_proposal)}, name: {write_proposal.name}")
+print(f"[DEBUG] write_draft result_as_answer: {getattr(write_draft, 'result_as_answer', 'N/A')}")
+
+# Test tool directly
+print(f"\n[DEBUG] Direct tool test...")
+test_root = Path(__file__).parent / "toy_project_llm"
+test_root.mkdir(exist_ok=True)
+(test_root / "test_dir").mkdir(exist_ok=True)
+
+import novel_workflow.crewai.tools as tools_mod
+tools_mod.PROJECT_ROOT = test_root
+
+result = write_draft.run(path="test_dir/test.md", content="# Test\nHello")
+print(f"[DEBUG] Direct tool result: {result}")
+print(f"[DEBUG] File exists: {(test_root / 'test_dir/test.md').exists()}")
+if (test_root / 'test_dir/test.md').exists():
+    print(f"[DEBUG] File content: {(test_root / 'test_dir/test.md').read_text(encoding='utf-8')[:50]}")
 
 
 def setup_project(root: Path):

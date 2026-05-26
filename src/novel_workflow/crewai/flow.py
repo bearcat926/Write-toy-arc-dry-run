@@ -57,34 +57,56 @@ class NovelFlow(Flow[NovelFlowState]):
 
             # Writer
             print(f"[NovelFlow] Writer starting...")
-            writer.kickoff(
+            writer_result = writer.kickoff(
                 f"Write chapter {ch_id} of the story.\n\n"
                 f"Story context:\n{context}\n\n"
-                f"Write the draft to: arcs/{self.state.arc_id}/drafts/{ch_id}.md"
+                f"IMPORTANT: You MUST use the write_draft tool to save your chapter. "
+                f"Save to: arcs/{self.state.arc_id}/drafts/{ch_id}.md"
             )
+            # Fallback: if tool wasn't called, save output directly
+            draft_path = root / "arcs" / self.state.arc_id / "drafts" / f"{ch_id}.md"
+            if not draft_path.exists():
+                print(f"[NovelFlow] Tool not called, saving writer output directly")
+                draft_path.parent.mkdir(parents=True, exist_ok=True)
+                content = writer_result.raw if hasattr(writer_result, 'raw') else str(writer_result)
+                with open(draft_path, "w", encoding="utf-8") as f:
+                    f.write(content)
 
             # Auditor
-            draft_path = root / "arcs" / self.state.arc_id / "drafts" / f"{ch_id}.md"
             draft_content = draft_path.read_text(encoding="utf-8", errors="replace") if draft_path.exists() else "(no draft)"
             print(f"[NovelFlow] Auditor starting...")
-            auditor.kickoff(
+            auditor_result = auditor.kickoff(
                 f"Review chapter {ch_id} for continuity issues.\n\n"
                 f"Draft:\n{draft_content}\n\n"
                 f"Story context:\n{context}\n\n"
-                f"Write review to: arcs/{self.state.arc_id}/reviews/{ch_id}_review.md"
+                f"IMPORTANT: You MUST use the write_review tool to save your review. "
+                f"Save to: arcs/{self.state.arc_id}/reviews/{ch_id}_review.md"
             )
+            # Fallback
+            review_path = root / "arcs" / self.state.arc_id / "reviews" / f"{ch_id}_review.md"
+            if not review_path.exists():
+                print(f"[NovelFlow] Tool not called, saving auditor output directly")
+                review_path.parent.mkdir(parents=True, exist_ok=True)
+                content = auditor_result.raw if hasattr(auditor_result, 'raw') else str(auditor_result)
+                with open(review_path, "w", encoding="utf-8") as f:
+                    f.write(content)
 
             # Extractor
-            review_path = root / "arcs" / self.state.arc_id / "reviews" / f"{ch_id}_review.md"
             review_content = review_path.read_text(encoding="utf-8", errors="replace") if review_path.exists() else "(no review)"
             print(f"[NovelFlow] Extractor starting...")
-            extractor.kickoff(
+            extractor_result = extractor.kickoff(
                 f"Extract narrative facts from chapter {ch_id}.\n\n"
                 f"Draft:\n{draft_content}\n\n"
                 f"Review:\n{review_content}\n\n"
-                f"Write proposals to: arcs/{self.state.arc_id}/proposals/{ch_id}_ledger_update_proposal.json\n\n"
+                f"IMPORTANT: You MUST use the write_proposal tool to save proposals as JSON to: "
+                f"arcs/{self.state.arc_id}/proposals/{ch_id}_ledger_update_proposal.json\n\n"
                 f"Each proposal must include: schema_version, claim, source_layer, source_artifact, evidence, confidence, target_ledger, operation, proposed_change."
             )
+            # Fallback: extract proposal from output
+            proposal_path = root / "arcs" / self.state.arc_id / "proposals" / f"{ch_id}_ledger_update_proposal.json"
+            if not proposal_path.exists():
+                print(f"[NovelFlow] Tool not called, extracting proposal from output")
+                self._extract_proposal_from_output(extractor_result, proposal_path, ch_id)
 
             # System script: validate + merge
             self._validate_and_merge(root, ch_id, aws_mgr, proposal_validator)
@@ -176,3 +198,23 @@ class NovelFlow(Flow[NovelFlowState]):
                     print(f"[NovelFlow] Proposal invalid ({result.error_code}), skipping")
             except Exception as e:
                 print(f"[NovelFlow] Proposal validation error: {e}")
+
+    def _extract_proposal_from_output(self, result, proposal_path: Path, ch_id: str):
+        """Extract proposal JSON from Agent output when tool wasn't called."""
+        import re
+        raw = result.raw if hasattr(result, 'raw') else str(result)
+        # Try to find JSON in the output
+        json_matches = re.findall(r'\{[^{}]*"schema_version"[^{}]*\}', raw, re.DOTALL)
+        if json_matches:
+            for match in json_matches:
+                try:
+                    data = json.loads(match)
+                    proposal_path.parent.mkdir(parents=True, exist_ok=True)
+                    with open(proposal_path, "w", encoding="utf-8") as f:
+                        json.dump(data, f, indent=2, ensure_ascii=False)
+                    print(f"[NovelFlow] Extracted proposal from output for {ch_id}")
+                    return
+                except json.JSONDecodeError:
+                    continue
+        # If no valid JSON found, create a minimal proposal
+        print(f"[NovelFlow] Could not extract proposal from output for {ch_id}")
