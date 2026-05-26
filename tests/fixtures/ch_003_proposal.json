@@ -1,0 +1,17 @@
+{
+  "schema_version": "1.0",
+  "claim": "Protagonist faces first challenge",
+  "source_layer": "draft",
+  "source_artifact": "arcs/arc_001/drafts/ch_003.md",
+  "evidence": "A drew the sword and stepped forward",
+  "confidence": "high",
+  "target_ledger": "timeline",
+  "operation": "append_event",
+  "proposed_change": {
+    "event_id": "evt_003",
+    "time_marker": "day_02_morning",
+    "summary": "Protagonist faces first challenge outside the tavern",
+    "participants": ["protagonist"],
+    "location": "Tavern courtyard"
+  }
+}

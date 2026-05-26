@@ -1,0 +1,11 @@
+{
+  "schema_version": "1.0",
+  "gate_id": "dir_001",
+  "gate_type": "direction",
+  "target_artifact": "project",
+  "decision": "approved",
+  "author_input_evidence": "Fantasy adventure with strong character arcs, target young adult readers",
+  "author_id": "local_author",
+  "source_artifacts": ["PLAN.md"],
+  "approval_level": "lightweight"
+}

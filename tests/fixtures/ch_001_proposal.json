@@ -1,0 +1,17 @@
+{
+  "schema_version": "1.0",
+  "claim": "Protagonist arrives at the tavern",
+  "source_layer": "draft",
+  "source_artifact": "arcs/arc_001/drafts/ch_001.md",
+  "evidence": "A pushed open the heavy oak door of the Rusty Anchor",
+  "confidence": "high",
+  "target_ledger": "timeline",
+  "operation": "append_event",
+  "proposed_change": {
+    "event_id": "evt_001",
+    "time_marker": "day_01_evening",
+    "summary": "Protagonist arrives at the Rusty Anchor tavern",
+    "participants": ["protagonist"],
+    "location": "Rusty Anchor tavern"
+  }
+}

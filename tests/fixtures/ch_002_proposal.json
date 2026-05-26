@@ -1,0 +1,17 @@
+{
+  "schema_version": "1.0",
+  "claim": "Protagonist meets the mentor",
+  "source_layer": "draft",
+  "source_artifact": "arcs/arc_001/drafts/ch_002.md",
+  "evidence": "The old man sat in the corner, watching with knowing eyes",
+  "confidence": "high",
+  "target_ledger": "timeline",
+  "operation": "append_event",
+  "proposed_change": {
+    "event_id": "evt_002",
+    "time_marker": "day_01_night",
+    "summary": "Protagonist meets the mentor at the tavern",
+    "participants": ["protagonist", "mentor"],
+    "location": "Rusty Anchor tavern"
+  }
+}
