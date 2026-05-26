@@ -47,7 +47,9 @@ class NovelFlow(Flow[NovelFlowState]):
     @listen(initialize_arc)
     def chapter_loop(self):
         """Run Writer -> Auditor -> Extractor for each chapter."""
-        root = Path(self.state.project_root)
+        # CrewAI Flow Pydantic state may lose absolute paths, use env var
+        import os
+        root = Path(os.environ.get("NOVEL_WORKFLOW_PROJECT_ROOT", self.state.project_root))
         aws_mgr = ArcWorkingStateManager(root)
         proposal_validator = ProposalValidator(root)
 
@@ -151,7 +153,8 @@ class NovelFlow(Flow[NovelFlowState]):
     @listen(chapter_loop)
     def finalize_arc(self):
         """Generate ledger_diff and apply."""
-        root = Path(self.state.project_root)
+        import os
+        root = Path(os.environ.get("NOVEL_WORKFLOW_PROJECT_ROOT", self.state.project_root))
         arc_id = self.state.arc_id
         print(f"\n[NovelFlow] === Finalizing arc {arc_id} ===")
 
