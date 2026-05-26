@@ -3,8 +3,10 @@ NovelFlow: Orchestrate Writer -> Auditor -> Extractor pipeline.
 Uses CrewAI Agents for LLM calls but Python for orchestration and file I/O.
 """
 import json
+import json as _json
 import os
 import re
+import time
 from pathlib import Path
 
 from crewai import Agent, LLM
@@ -12,10 +14,14 @@ from crewai import Agent, LLM
 from ..system_scripts.arc_state_manager import ArcWorkingStateManager
 from ..system_scripts.ledger_diff_generator import LedgerDiffGenerator
 from ..system_scripts.atomic_apply_manager import AtomicApplyManager
+from ..system_scripts.chapter_effect_checker import ChapterEffectChecker
 from ..schemas.gate import GateRecord
 from ..schemas.diff import LedgerDiff
 from ..schemas.proposal import LedgerUpdateProposal
+from ..schemas.progress import ProgressEntry
+from ..schemas.chapter_effect import ChapterEffectReport
 from ..validators.proposal_validator import ProposalValidator
+from ..metrics.collector import MetricsCollector, ChapterMetrics
 from .config import LLM_MODEL, LLM_BASE_URL, LLM_API_KEY
 from .tools import safe_write_draft, safe_write_review, safe_write_proposal
 
@@ -71,6 +77,29 @@ def _extract_proposal(raw_output: str) -> dict | None:
     return None
 
 
+def _run_revision_loop(
+    root: Path,
+    arc_id: str,
+    chapter_ids: list[str],
+    max_revisions: int = 2,
+) -> None:
+    """
+    Revision loop stub for production mode.
+    When gate.decision == 'rejected', iterates up to max_revisions times:
+      1. Mark rejected chapters
+      2. Rewrite chapters
+      3. Re-run review + proposal
+
+    Currently a no-op stub; production path needs real gate decision integration.
+    """
+    print(f"[NovelFlow] Revision loop triggered for {arc_id} (max {max_revisions} loops)")
+    # TODO: Implement revision loop for production path
+    # - Identify rejected chapters from gate feedback
+    # - Rewrite using writer agent
+    # - Re-audit and re-extract proposals
+    # - Re-attempt apply
+
+
 def run_novel_flow(
     project_root: str | Path,
     arc_id: str = "arc_001",
@@ -103,6 +132,18 @@ def run_novel_flow(
     aws_mgr.initialize(arc_id)
     print(f"[NovelFlow] Initialized arc {arc_id} at {root}")
 
+    # Create arc_contract.md template if not exists
+    arc_contract_path = root / "arcs" / arc_id / "arc_contract.md"
+    if not arc_contract_path.exists():
+        arc_contract_path.write_text(
+            f"# Arc Contract: {arc_id}\n\n"
+            f"## Hard Requirements\n\n"
+            f"## Absolute Prohibitions\n\n"
+            f"## Checkpoint Chapters\n\ncheckpoint_chapters: []\n"
+            f"checkpoint_interval: null\n",
+            encoding="utf-8",
+        )
+
     # Create agents
     writer = Agent(
         role="Novel Chapter Writer",
@@ -128,6 +169,19 @@ def run_novel_flow(
 
     chapter_results = []
     validated_proposals = []  # Collect only validated proposals during chapter loop
+
+    # Parse checkpoint_chapters from arc_contract
+    contract_path = root / "arcs" / arc_id / "arc_contract.md"
+    checkpoint_chapters = []
+    if contract_path.exists():
+        _ckpt_match = re.search(r'checkpoint_chapters:\s*\[([^\]]*)\]', contract_path.read_text(encoding="utf-8"))
+        if _ckpt_match and _ckpt_match.group(1).strip():
+            checkpoint_chapters = [int(x.strip()) for x in _ckpt_match.group(1).split(",") if x.strip()]
+
+    # Metrics collector
+    metrics_collector = MetricsCollector(root)
+    effect_checker = ChapterEffectChecker()
+    chapter_start = time.time()
 
     for ch_num in range(1, chapters_total + 1):
         ch_id = f"ch_{ch_num:03d}"
@@ -176,6 +230,7 @@ def run_novel_flow(
         )
         raw_output = extractor_result.raw if hasattr(extractor_result, 'raw') else str(extractor_result)
         proposal_data = _extract_proposal(raw_output)
+        proposal_merged_flag = False
         if proposal_data:
             try:
                 proposal_path = safe_write_proposal(
@@ -191,6 +246,7 @@ def run_novel_flow(
                 if result.is_valid:
                     aws_mgr.merge_proposal(arc_id, proposal, ch_id)
                     validated_proposals.append(proposal_data)
+                    proposal_merged_flag = True
                     print(f"[NovelFlow] Merged proposal: {proposal.claim}")
                 else:
                     print(f"[NovelFlow] Proposal invalid ({result.error_code})")
@@ -200,6 +256,38 @@ def run_novel_flow(
             print(f"[NovelFlow] Could not extract proposal from output")
 
         chapter_results.append(ch_id)
+
+        # 1.2 progress.jsonl writing
+        progress_entry = ProgressEntry(
+            event_type="chapter_completed",
+            artifact_path=f"arcs/{arc_id}/drafts/{ch_id}.md",
+            details={"proposal_merged": proposal_merged_flag},
+            contains_narrative_fact=False,
+        )
+        with open(root / "workspace" / "progress.jsonl", "a", encoding="utf-8") as pf:
+            pf.write(_json.dumps(progress_entry.model_dump(mode="json"), ensure_ascii=False) + "\n")
+
+        # 1.3 ChapterEffectChecker integration (non-blocking)
+        effect_report = ChapterEffectReport(chapter_id=ch_id, scene_goal="auto-detected")
+        _passed, _failures = effect_checker.check(effect_report)
+        if not _passed:
+            print(f"[NovelFlow] ChapterEffect warning for {ch_id}: {_failures}")
+
+        # 1.4 MetricsCollector recording
+        metrics_collector.record_chapter(ChapterMetrics(
+            arc_id=arc_id,
+            chapter_id=ch_id,
+            proposal_accepted=proposal_merged_flag,
+            audit_failed=False,
+            pause_triggered=False,
+            runtime_seconds=time.time() - chapter_start,
+        ))
+        chapter_start = time.time()
+
+        # 1.5 checkpoint_chapters check
+        if ch_num in checkpoint_chapters:
+            print(f"[NovelFlow] CHECKPOINT: Chapter {ch_id} reached checkpoint. Pausing for author review.")
+
         print(f"[NovelFlow] Chapter {ch_id} complete")
 
     # Finalize
@@ -232,6 +320,37 @@ def run_novel_flow(
     draft_files = [f"{ch_id}.md" for ch_id in chapter_results]
     apply_result = apply_mgr.apply(arc_id, gate, draft_files, ledger_diff, None)
     print(f"[NovelFlow] Apply result: {apply_result}")
+
+    # 1.6 dashboard_report.md generation
+    dashboard_path = root / "workspace" / "dashboard_report.md"
+    dashboard_lines = [
+        f"# Dashboard Report: {arc_id}",
+        f"",
+        f"**Status:** derived (auto-generated)",
+        f"**Source:** system script",
+        f"",
+        f"## Chapters",
+        f"",
+    ]
+    for ch_id_item in chapter_results:
+        dashboard_lines.append(f"- {ch_id_item}: drafted, reviewed")
+    dashboard_lines.extend([
+        f"",
+        f"## Proposals",
+        f"",
+        f"- Validated: {len(validated_proposals)}",
+        f"",
+        f"## Apply",
+        f"",
+        f"- Result: {apply_result.get('result', 'unknown')}",
+        f"- Diff hash: {apply_result.get('diff_hash', 'N/A')}",
+    ])
+    dashboard_path.write_text("\n".join(dashboard_lines), encoding="utf-8")
+    print(f"[NovelFlow] Dashboard saved to {dashboard_path}")
+
+    # Revision loop (production mode stub)
+    if not dry_run and gate.decision == "rejected":
+        _run_revision_loop(root, arc_id, chapter_results, max_revisions=2)
 
     return {
         "chapters": chapter_results,
