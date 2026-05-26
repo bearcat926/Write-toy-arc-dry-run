@@ -13,7 +13,11 @@ def _get_project_root() -> Path:
     env_root = os.environ.get("NOVEL_WORKFLOW_PROJECT_ROOT")
     if env_root:
         return Path(env_root)
-    return PROJECT_ROOT
+    # Fallback: check if PROJECT_ROOT global was set
+    if PROJECT_ROOT != Path("."):
+        return PROJECT_ROOT
+    # Last resort: current directory
+    return Path(".")
 
 
 # Set at runtime by NovelFlow before dispatching agents
@@ -29,9 +33,13 @@ class WriteDraftTool(BaseTool):
     name: str = "write_draft"
     description: str = "Write a chapter draft to the specified path under arcs/*/drafts/."
     args_schema: type[BaseModel] = WriteDraftInput
+    _project_root: Path = Path(".")
+
+    def set_project_root(self, root: Path):
+        self._project_root = root
 
     def _run(self, path: str, content: str) -> str:
-        project_root = _get_project_root()
+        project_root = self._project_root if self._project_root != Path(".") else _get_project_root()
         guard = PathSafetyGuard(project_root)
         resolved = guard.check_write_path(path, "agent")
         resolved = resolved.resolve()
@@ -51,9 +59,13 @@ class WriteReviewTool(BaseTool):
     name: str = "write_review"
     description: str = "Write a review report to the specified path under arcs/*/reviews/."
     args_schema: type[BaseModel] = WriteReviewInput
+    _project_root: Path = Path(".")
+
+    def set_project_root(self, root: Path):
+        self._project_root = root
 
     def _run(self, path: str, content: str) -> str:
-        project_root = _get_project_root()
+        project_root = self._project_root if self._project_root != Path(".") else _get_project_root()
         guard = PathSafetyGuard(project_root)
         resolved = guard.check_write_path(path, "agent")
         resolved = resolved.resolve()
@@ -73,9 +85,13 @@ class WriteProposalTool(BaseTool):
     name: str = "write_proposal"
     description: str = "Write a ledger update proposal (valid JSON) to the specified path under arcs/*/proposals/."
     args_schema: type[BaseModel] = WriteProposalInput
+    _project_root: Path = Path(".")
+
+    def set_project_root(self, root: Path):
+        self._project_root = root
 
     def _run(self, path: str, content: str) -> str:
-        project_root = _get_project_root()
+        project_root = self._project_root if self._project_root != Path(".") else _get_project_root()
         guard = PathSafetyGuard(project_root)
         resolved = guard.check_write_path(path, "agent")
         resolved = resolved.resolve()

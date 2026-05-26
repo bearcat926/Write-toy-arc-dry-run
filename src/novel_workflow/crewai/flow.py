@@ -32,6 +32,10 @@ class NovelFlow(Flow[NovelFlowState]):
         # Set environment variable for thread-safe access
         import os
         os.environ["NOVEL_WORKFLOW_PROJECT_ROOT"] = str(root.resolve())
+        # Set project root on tool instances
+        tools_module.write_draft.set_project_root(root)
+        tools_module.write_review.set_project_root(root)
+        tools_module.write_proposal.set_project_root(root)
 
         for d in ["drafts", "reviews", "proposals", "reports", "gates", "checkpoints", "archive"]:
             (root / "arcs" / self.state.arc_id / d).mkdir(parents=True, exist_ok=True)
