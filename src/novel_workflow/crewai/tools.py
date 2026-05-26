@@ -114,3 +114,44 @@ class WriteProposalTool(BaseTool):
 write_draft = WriteDraftTool(result_as_answer=True)
 write_review = WriteReviewTool(result_as_answer=True)
 write_proposal = WriteProposalTool(result_as_answer=True)
+
+
+# Standalone safe write functions (used by flow.py when CrewAI tool calling is unavailable)
+def safe_write_draft(project_root: Path, path: str, content: str) -> Path:
+    """Write draft through PathSafetyGuard. Returns resolved path."""
+    guard = PathSafetyGuard(project_root)
+    resolved = guard.check_write_path(path, "agent").resolve()
+    resolved.parent.mkdir(parents=True, exist_ok=True)
+    with open(resolved, "w", encoding="utf-8") as f:
+        f.write(content)
+        f.flush()
+    return resolved
+
+
+def safe_write_review(project_root: Path, path: str, content: str) -> Path:
+    """Write review through PathSafetyGuard. Returns resolved path."""
+    guard = PathSafetyGuard(project_root)
+    resolved = guard.check_write_path(path, "agent").resolve()
+    resolved.parent.mkdir(parents=True, exist_ok=True)
+    with open(resolved, "w", encoding="utf-8") as f:
+        f.write(content)
+        f.flush()
+    return resolved
+
+
+def safe_write_proposal(project_root: Path, path: str, content: str) -> Path:
+    """Write proposal through PathSafetyGuard with JSON validation. Returns resolved path."""
+    guard = PathSafetyGuard(project_root)
+    resolved = guard.check_write_path(path, "agent").resolve()
+    # Clean markdown code block wrappers
+    cleaned = content.strip()
+    cleaned = re.sub(r'^```(?:json)?\s*\n?', '', cleaned)
+    cleaned = re.sub(r'\n?```\s*$', '', cleaned)
+    cleaned = cleaned.strip()
+    data = json.loads(cleaned)
+    LedgerUpdateProposal.model_validate(data)
+    resolved.parent.mkdir(parents=True, exist_ok=True)
+    with open(resolved, "w", encoding="utf-8") as f:
+        f.write(json.dumps(data, indent=2, ensure_ascii=False))
+        f.flush()
+    return resolved

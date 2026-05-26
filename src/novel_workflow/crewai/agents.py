@@ -10,9 +10,10 @@ def _create_llm() -> LLM:
         api_key=LLM_API_KEY,
         max_tokens=32000,
     )
-    # Force function calling support for custom OpenAI-compatible endpoints
-    # litellm doesn't know about custom model names, so we override
-    llm.supports_function_calling = lambda: True
+    # NOTE: Custom OpenAI-compatible endpoints may not be recognized by litellm
+    # as supporting function calling. If the model supports it but CrewAI reports
+    # supports_function_calling=False, the flow will use direct Agent.kickoff()
+    # instead of tool-based calling. See flow.py for the fallback mechanism.
     return llm
 
 

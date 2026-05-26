@@ -17,6 +17,7 @@ from ..schemas.diff import LedgerDiff
 from ..schemas.proposal import LedgerUpdateProposal
 from ..validators.proposal_validator import ProposalValidator
 from .config import LLM_MODEL, LLM_BASE_URL, LLM_API_KEY
+from .tools import safe_write_draft, safe_write_review, safe_write_proposal
 
 
 def _create_llm() -> LLM:
@@ -74,11 +75,21 @@ def run_novel_flow(
     project_root: str | Path,
     arc_id: str = "arc_001",
     chapters_total: int = 3,
+    dry_run: bool = False,
+    arc_end_gate: GateRecord | None = None,
 ) -> dict:
     """
     Run the full novel flow: initialize -> chapters -> finalize.
     Returns a dict with results and file paths.
+
+    Args:
+        dry_run: If True, auto-approves arc_end gate (for testing only).
+                 If False, arc_end_gate must be provided by the caller.
+        arc_end_gate: Gate record from the author. Required when dry_run=False.
     """
+    if not dry_run and arc_end_gate is None:
+        raise ValueError("arc_end_gate is required when dry_run=False. "
+                         "The system cannot approve gates on behalf of the author.")
     root = Path(project_root).resolve()
     llm = _create_llm()
     aws_mgr = ArcWorkingStateManager(root)
@@ -116,6 +127,7 @@ def run_novel_flow(
     )
 
     chapter_results = []
+    validated_proposals = []  # Collect only validated proposals during chapter loop
 
     for ch_num in range(1, chapters_total + 1):
         ch_id = f"ch_{ch_num:03d}"
@@ -130,10 +142,8 @@ def run_novel_flow(
             f"Story context:\n{context}\n\n"
             f"Write ONLY the chapter content in markdown format."
         )
-        draft_path = root / "arcs" / arc_id / "drafts" / f"{ch_id}.md"
         content = writer_result.raw if hasattr(writer_result, 'raw') else str(writer_result)
-        with open(draft_path, "w", encoding="utf-8") as f:
-            f.write(content)
+        draft_path = safe_write_draft(root, f"arcs/{arc_id}/drafts/{ch_id}.md", content)
         print(f"[NovelFlow] Draft saved to {draft_path}")
 
         # Auditor
@@ -145,10 +155,8 @@ def run_novel_flow(
             f"Story context:\n{context}\n\n"
             f"Write ONLY the review content."
         )
-        review_path = root / "arcs" / arc_id / "reviews" / f"{ch_id}_review.md"
         content = auditor_result.raw if hasattr(auditor_result, 'raw') else str(auditor_result)
-        with open(review_path, "w", encoding="utf-8") as f:
-            f.write(content)
+        review_path = safe_write_review(root, f"arcs/{arc_id}/reviews/{ch_id}_review.md", content)
         print(f"[NovelFlow] Review saved to {review_path}")
 
         # Extractor
@@ -167,19 +175,22 @@ def run_novel_flow(
             f"Output ONLY the JSON, no other text."
         )
         raw_output = extractor_result.raw if hasattr(extractor_result, 'raw') else str(extractor_result)
-        proposal_path = root / "arcs" / arc_id / "proposals" / f"{ch_id}_ledger_update_proposal.json"
         proposal_data = _extract_proposal(raw_output)
         if proposal_data:
-            with open(proposal_path, "w", encoding="utf-8") as f:
-                json.dump(proposal_data, f, indent=2, ensure_ascii=False)
-            print(f"[NovelFlow] Proposal saved to {proposal_path}")
-
-            # Validate and merge
             try:
+                proposal_path = safe_write_proposal(
+                    root,
+                    f"arcs/{arc_id}/proposals/{ch_id}_ledger_update_proposal.json",
+                    json.dumps(proposal_data),
+                )
+                print(f"[NovelFlow] Proposal saved to {proposal_path}")
+
+                # Validate and merge
                 proposal = LedgerUpdateProposal.model_validate(proposal_data)
                 result = proposal_validator.validate(proposal)
                 if result.is_valid:
                     aws_mgr.merge_proposal(arc_id, proposal, ch_id)
+                    validated_proposals.append(proposal_data)
                     print(f"[NovelFlow] Merged proposal: {proposal.claim}")
                 else:
                     print(f"[NovelFlow] Proposal invalid ({result.error_code})")
@@ -194,35 +205,27 @@ def run_novel_flow(
     # Finalize
     print(f"\n[NovelFlow] === Finalizing arc {arc_id} ===")
 
-    # Collect proposals
-    all_proposals = []
-    for ch_id in chapter_results:
-        proposal_path = root / "arcs" / arc_id / "proposals" / f"{ch_id}_ledger_update_proposal.json"
-        if proposal_path.exists():
-            data = json.loads(proposal_path.read_text(encoding="utf-8", errors="replace"))
-            if isinstance(data, list):
-                all_proposals.extend(data)
-            else:
-                all_proposals.append(data)
-
-    # Generate ledger_diff
+    # Generate ledger_diff from validated proposals only
     gen = LedgerDiffGenerator()
-    diff_data = gen.generate(all_proposals)
+    diff_data = gen.generate(validated_proposals)
     ledger_diff = LedgerDiff(arc_id=arc_id, operations=diff_data["operations"])
     (root / "arcs" / arc_id / "reports" / "ledger_diff.json").write_text(
         json.dumps(ledger_diff.model_dump(mode="json"), indent=2)
     )
 
-    # Create arc_end gate
-    gate = GateRecord(
-        gate_id=f"ae_{arc_id}",
-        gate_type="arc_end",
-        target_artifact=arc_id,
-        decision="approved",
-        author_input_evidence="auto-approved for dry run",
-        author_id="local_author",
-        source_artifacts=[],
-    )
+    # Create or use provided arc_end gate
+    if dry_run:
+        gate = GateRecord(
+            gate_id=f"ae_{arc_id}",
+            gate_type="arc_end",
+            target_artifact=arc_id,
+            decision="approved",
+            author_input_evidence="[DRY RUN] auto-approved for testing only",
+            author_id="dry_run_system",
+            source_artifacts=[],
+        )
+    else:
+        gate = arc_end_gate
 
     # Atomic apply
     apply_mgr = AtomicApplyManager(root)

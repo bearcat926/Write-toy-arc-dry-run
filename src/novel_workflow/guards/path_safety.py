@@ -1,3 +1,4 @@
+import re as _re
 from pathlib import Path, PurePosixPath
 from ..config import ROLE_ALLOWLIST
 
@@ -6,6 +7,10 @@ class PathSafetyError(Exception):
     def __init__(self, code: str, message: str):
         self.code = code
         super().__init__(f"{code}: {message}")
+
+
+# Agent positive allowlist: arcs/<arc_id>/(drafts|reviews|proposals|variants)/...
+_AGENT_ALLOWED_PATTERN = _re.compile(r"^arcs/[^/]+/(drafts|reviews|proposals|variants)/")
 
 
 class PathSafetyGuard:
@@ -33,17 +38,23 @@ class PathSafetyGuard:
         if not str(resolved).startswith(str(self._root)):
             raise PathSafetyError("SYMLINK_ESCAPE_REJECTED", f"Path escapes workspace: {path}")
 
-        # Check role allowlist
-        top_dir = pure.parts[0] if pure.parts else ""
-        allowed = ROLE_ALLOWLIST.get(role, {}).get("write", [])
+        # Role-based positive allowlist
+        if role == "agent":
+            if not _AGENT_ALLOWED_PATTERN.match(path):
+                raise PathSafetyError("AGENT_WRITE_DENIED",
+                    f"Agent can only write to arcs/<id>/(drafts|reviews|proposals|variants)/. Got: {path}")
 
-        if role == "agent" and top_dir in ("canon", "ledgers", "arc_working_state", "gates", "gate_records"):
-            raise PathSafetyError("AGENT_WRITE_DENIED", f"Agent cannot write to: {top_dir}")
+        elif role == "plugin":
+            allowed = ROLE_ALLOWLIST.get("plugin", {}).get("write", [])
+            top_dir = pure.parts[0] if pure.parts else ""
+            if top_dir not in allowed:
+                raise PathSafetyError("PLUGIN_WRITE_DENIED", f"Plugin cannot write to: {top_dir}")
 
-        if role == "plugin" and top_dir not in allowed:
-            raise PathSafetyError("PLUGIN_WRITE_DENIED", f"Plugin cannot write to: {top_dir}")
+        elif role == "system_script":
+            # System script can write to any allowed path
+            pass
 
-        if role not in ("agent", "system_script", "plugin"):
+        else:
             raise PathSafetyError("UNKNOWN_ROLE", f"Unknown role: {role}")
 
         return resolved

@@ -7,13 +7,35 @@ from ..schemas.diff import LedgerDiff, CanonDiff, ApplyRecord
 from ..validators.gate_validator import GateValidator
 from .canonicalizer import Canonicalizer
 
+CONSUMED_FILE = "consumed_hashes.json"
+
 
 class AtomicApplyManager:
     def __init__(self, project_root: Path):
         self._root = project_root
-        self._consumed: set[str] = set()
         self._gate_validator = GateValidator()
         self._canonicalizer = Canonicalizer(project_root)
+        self._consumed: set[str] = self._load_consumed()
+
+    def _load_consumed(self) -> set[str]:
+        """Load consumed hashes from persistent storage."""
+        path = self._root / "workspace" / CONSUMED_FILE
+        if path.exists():
+            try:
+                data = json.loads(path.read_text(encoding="utf-8"))
+                return set(data.get("consumed_hashes", []))
+            except (json.JSONDecodeError, KeyError):
+                return set()
+        return set()
+
+    def _save_consumed(self):
+        """Save consumed hashes to persistent storage."""
+        path = self._root / "workspace" / CONSUMED_FILE
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(
+            json.dumps({"consumed_hashes": sorted(self._consumed)}, indent=2),
+            encoding="utf-8",
+        )
 
     def _diff_hash(self, diff: LedgerDiff) -> str:
         raw = json.dumps(diff.model_dump(mode='json'), sort_keys=True, ensure_ascii=False)
@@ -35,15 +57,35 @@ class AtomicApplyManager:
 
         # 3. Lock (MVP: single process, no real lock needed)
 
-        # 4. Validate not consumed
+        # 4. Validate not consumed (persistent)
         if diff_hash in self._consumed:
             raise ValueError("ALREADY_CONSUMED: This ledger_diff has already been applied")
 
-        # 5. Snapshot
+        # 5. Snapshot ledgers + canon/manuscript + canon/characters
         snapshot_dir = self._root / "arcs" / arc_id / "archive" / f"snapshot_{diff_hash[:8]}"
         snapshot_dir.mkdir(parents=True, exist_ok=True)
-        for ledger_file in (self._root / "ledgers").glob("*.json"):
-            shutil.copy2(ledger_file, snapshot_dir / ledger_file.name)
+
+        # Snapshot ledgers
+        ledgers_snap = snapshot_dir / "ledgers"
+        ledgers_snap.mkdir(exist_ok=True)
+        for f in (self._root / "ledgers").glob("*.json"):
+            shutil.copy2(f, ledgers_snap / f.name)
+
+        # Snapshot canon/manuscript
+        manuscript_src = self._root / "canon" / "manuscript"
+        manuscript_snap = snapshot_dir / "canon_manuscript"
+        if manuscript_src.exists():
+            if manuscript_snap.exists():
+                shutil.rmtree(manuscript_snap)
+            shutil.copytree(manuscript_src, manuscript_snap)
+
+        # Snapshot canon/characters
+        characters_src = self._root / "canon" / "characters"
+        characters_snap = snapshot_dir / "canon_characters"
+        if characters_src.exists():
+            if characters_snap.exists():
+                shutil.rmtree(characters_snap)
+            shutil.copytree(characters_src, characters_snap)
 
         try:
             # 6. Canonicalize
@@ -66,15 +108,27 @@ class AtomicApplyManager:
             record_path = self._root / "arcs" / arc_id / "reports" / "apply_record.json"
             record_path.write_text(json.dumps(record.model_dump(), indent=2, ensure_ascii=False, default=str))
 
-            # 10. Mark consumed
+            # 10. Mark consumed (persistent)
             self._consumed.add(diff_hash)
+            self._save_consumed()
 
             return {"result": "success", "diff_hash": diff_hash}
 
         except Exception:
-            # Rollback: restore from snapshot
-            for f in snapshot_dir.glob("*.json"):
+            # Rollback: restore ledgers + canon/manuscript + canon/characters
+            for f in ledgers_snap.glob("*.json"):
                 shutil.copy2(f, self._root / "ledgers" / f.name)
+
+            if manuscript_snap.exists():
+                if manuscript_src.exists():
+                    shutil.rmtree(manuscript_src)
+                shutil.copytree(manuscript_snap, manuscript_src)
+
+            if characters_snap.exists():
+                if characters_src.exists():
+                    shutil.rmtree(characters_src)
+                shutil.copytree(characters_snap, characters_src)
+
             raise
 
     def _apply_ledger_diff(self, diff: LedgerDiff):

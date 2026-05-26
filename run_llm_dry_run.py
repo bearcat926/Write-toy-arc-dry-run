@@ -7,8 +7,8 @@ import os
 import sys
 from pathlib import Path
 
-# Set API key
-os.environ["OPENAI_API_KEY"] = "REDACTED_API_KEY"
+# Set API key from environment variable (never hardcode)
+# export OPENAI_API_KEY="your-key-here" before running
 
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent / "src"))
@@ -122,6 +122,7 @@ if __name__ == "__main__":
         project_root=str(root),
         arc_id="arc_001",
         chapters_total=3,
+        dry_run=True,
     )
 
     verify_results(root)
