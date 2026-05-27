@@ -68,19 +68,45 @@ def _build_context(root: Path, arc_id: str, current_ch: int) -> str:
 
 
 def _extract_proposal(raw_output: str) -> dict | None:
-    """Extract proposal JSON from LLM output."""
-    # Try to find JSON in the output
-    json_matches = re.findall(r'\{[^{}]*"schema_version"[^{}]*\}', raw_output, re.DOTALL)
-    for match in json_matches:
-        try:
-            return json.loads(match)
-        except json.JSONDecodeError:
-            continue
-    # Try parsing entire output
+    """Extract proposal JSON from LLM output using 3-layer fallback."""
+    # Layer 1: Direct json.loads
     try:
-        return json.loads(raw_output.strip())
-    except json.JSONDecodeError:
+        data = json.loads(raw_output.strip())
+        if isinstance(data, dict) and "schema_version" in data:
+            return data
+    except (json.JSONDecodeError, ValueError):
         pass
+
+    # Layer 2: Extract markdown code block
+    code_block = re.search(r'```(?:json)?\s*\n(.*?)\n```', raw_output, re.DOTALL)
+    if code_block:
+        try:
+            data = json.loads(code_block.group(1).strip())
+            if isinstance(data, dict) and "schema_version" in data:
+                return data
+        except (json.JSONDecodeError, ValueError):
+            pass
+
+    # Layer 3: Bracket counting to find outermost JSON object containing schema_version
+    for i, ch in enumerate(raw_output):
+        if ch == '{':
+            depth = 0
+            for j in range(i, len(raw_output)):
+                if raw_output[j] == '{':
+                    depth += 1
+                elif raw_output[j] == '}':
+                    depth -= 1
+                if depth == 0:
+                    candidate = raw_output[i:j+1]
+                    if 'schema_version' in candidate:
+                        try:
+                            data = json.loads(candidate)
+                            if isinstance(data, dict):
+                                return data
+                        except json.JSONDecodeError:
+                            pass
+                    break
+
     return None
 
 
@@ -231,7 +257,7 @@ def run_novel_flow(
             f'"evidence": "...", "confidence": "high", '
             f'"target_ledger": "timeline", "operation": "append_event", '
             f'"proposed_change": {{"event_id": "...", "summary": "..."}}}}\n\n'
-            f"Output ONLY the JSON, no other text."
+            f"Return ONLY valid JSON. No markdown. No explanation. No surrounding text."
         )
         print(f"[TIMER] ch={ch_id} agent=Extractor prompt_len={len(extractor_prompt)} starting...")
         _t0 = time.time()
@@ -301,6 +327,19 @@ def run_novel_flow(
 
     # Finalize
     print(f"\n[NovelFlow] === Finalizing arc {arc_id} ===")
+
+    # Hard rule: no proposals = no apply (unless manuscript_only mode)
+    if len(chapter_results) > 0 and len(validated_proposals) == 0:
+        print(f"[NovelFlow] WARNING: {len(chapter_results)} chapters completed but 0 proposals validated")
+        print(f"[NovelFlow] Skipping ledger_diff generation and apply")
+        print(f"[NovelFlow] Drafts saved but ledgers NOT updated")
+        return {
+            "result": "skipped_no_proposals",
+            "chapters": chapter_results,
+            "apply_result": None,
+            "manuscript_dir": str(root / "canon" / "manuscript"),
+            "ledgers_dir": str(root / "ledgers"),
+        }
 
     # Generate ledger_diff from validated proposals only
     gen = LedgerDiffGenerator()
