@@ -1,5 +1,0 @@
-{"created_at": "2026-05-27T07:07:28.010862Z", "schema_version": "1.0", "event_type": "chapter_completed", "artifact_path": "arcs/arc_001/drafts/ch_001.md", "details": {"proposal_merged": false}, "contains_narrative_fact": false}
-{"created_at": "2026-05-27T07:14:41.460474Z", "schema_version": "1.0", "event_type": "chapter_completed", "artifact_path": "arcs/arc_001/drafts/ch_002.md", "details": {"proposal_merged": false}, "contains_narrative_fact": false}
-{"created_at": "2026-05-27T07:18:12.071948Z", "schema_version": "1.0", "event_type": "chapter_completed", "artifact_path": "arcs/arc_001/drafts/ch_003.md", "details": {"proposal_merged": false}, "contains_narrative_fact": false}
-{"created_at": "2026-05-27T07:24:55.867416Z", "schema_version": "1.0", "event_type": "chapter_completed", "artifact_path": "arcs/arc_001/drafts/ch_004.md", "details": {"proposal_merged": false}, "contains_narrative_fact": false}
-{"created_at": "2026-05-27T07:35:17.016314Z", "schema_version": "1.0", "event_type": "chapter_completed", "artifact_path": "arcs/arc_001/drafts/ch_005.md", "details": {"proposal_merged": false}, "contains_narrative_fact": false}

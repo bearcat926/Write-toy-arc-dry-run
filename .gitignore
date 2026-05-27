@@ -1,5 +1,8 @@
 __pycache__/
+*.pyc
 toy_project_llm/
+toy_project_stress/
 arcs/
 canon/manuscript/
 .env
+workspace/consumed_hashes.json
