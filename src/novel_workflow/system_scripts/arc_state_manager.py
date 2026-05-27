@@ -58,3 +58,24 @@ class ArcWorkingStateManager:
             elif any(dep in rejected_ids for dep in entry.get("depends_on", [])):
                 entry["status"] = "invalidated_by_rejected_dependency"
         self._save(arc_id, aws)
+
+    def check_canon_conflict(self, arc_id: str) -> list[dict]:
+        """Compare AWS entries against canon state for key-value conflicts."""
+        canon_path = self._root / "canon" / "canon_state.json"
+        if not canon_path.exists():
+            return []
+        canon_state = json.loads(canon_path.read_text())
+        aws = self._load(arc_id)
+        conflicts = []
+        for entry in aws.get("entries", []):
+            key = entry.get("key", "")
+            value = entry.get("value")
+            if key in canon_state and key != "schema_version":
+                if canon_state[key] != value:
+                    conflicts.append({
+                        "key": key,
+                        "canon_value": canon_state[key],
+                        "aws_value": value,
+                        "state_id": entry.get("state_id", ""),
+                    })
+        return conflicts

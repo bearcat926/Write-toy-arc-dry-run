@@ -76,3 +76,23 @@ def test_mark_chapters_rejected(project_root: Path):
     assert statuses["aws_001"] == "rejected"
     assert statuses["aws_002"] == "invalidated_by_rejected_dependency"
     assert statuses["aws_003"] == "working_accepted"
+
+
+def test_aws_canon_conflict_detected(project_root: Path):
+    """AWS entry that contradicts canon should be detected."""
+    (project_root / "canon/canon_state.json").write_text(
+        json.dumps({"schema_version": "1.0", "protagonist_alive": True})
+    )
+    (project_root / "arcs/arc_001/arc_working_state.json").write_text(
+        json.dumps({
+            "schema_version": "1.0",
+            "entries": [
+                {"state_id": "aws_001", "source_chapter": "ch_001", "key": "protagonist_alive",
+                 "value": False, "status": "working_accepted", "depends_on": []}
+            ]
+        })
+    )
+    mgr = ArcWorkingStateManager(project_root)
+    conflicts = mgr.check_canon_conflict("arc_001")
+    assert len(conflicts) == 1
+    assert conflicts[0]["key"] == "protagonist_alive"

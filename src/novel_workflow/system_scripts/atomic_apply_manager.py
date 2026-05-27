@@ -2,6 +2,7 @@ import hashlib
 import json
 import shutil
 from pathlib import Path
+from ..config import FORESHADOW_TRANSITIONS, LEDGER_OPERATIONS
 from ..schemas.gate import GateRecord
 from ..schemas.diff import LedgerDiff, CanonDiff, ApplyRecord
 from ..validators.gate_validator import GateValidator
@@ -43,6 +44,58 @@ class AtomicApplyManager:
         raw = json.dumps(diff.model_dump(mode='json'), sort_keys=True, ensure_ascii=False)
         return hashlib.sha256(raw.encode()).hexdigest()
 
+    def _prevalidate_ledger_diff(self, diff: LedgerDiff):
+        """Validate ledger diff before canonicalization.
+
+        Checks:
+        - All operations have valid target_ledger
+        - Foreshadow transitions are valid (uses FORESHADOW_TRANSITIONS)
+        - No duplicate events in timeline
+        """
+        VALID_LEDGERS = set(LEDGER_OPERATIONS.keys())
+
+        timeline_path = self._root / "ledgers" / "timeline.json"
+        if timeline_path.exists():
+            existing_timeline = json.loads(timeline_path.read_text())
+            existing_event_ids = {
+                e.get("event_id") for e in existing_timeline.get("events", [])
+            }
+        else:
+            existing_event_ids = set()
+
+        seen_event_ids: set[str] = set()
+
+        for op in diff.operations:
+            target = op.get("target_ledger", "")
+            operation = op.get("operation", "")
+
+            if target not in VALID_LEDGERS:
+                raise ValueError(f"INVALID_LEDGER: {target}")
+
+            if target == "foreshadowing":
+                data = op.get("data", {})
+                status_from = data.get("status_from")
+                status_to = data.get("status_to")
+
+                if status_from is not None and status_to is not None:
+                    allowed = FORESHADOW_TRANSITIONS.get(status_from, set())
+                    if status_to not in allowed:
+                        raise ValueError(
+                            f"INVALID_FORESHADOW_TRANSITION: {status_from} -> {status_to}"
+                        )
+
+            valid_ops = LEDGER_OPERATIONS.get(target, set())
+            if operation not in valid_ops:
+                raise ValueError(f"INVALID_OPERATION: {operation} for {target}")
+
+            if target == "timeline":
+                data = op.get("data", {})
+                eid = data.get("event_id")
+                if eid:
+                    if eid in existing_event_ids or eid in seen_event_ids:
+                        raise ValueError(f"DUPLICATE_EVENT: {eid}")
+                    seen_event_ids.add(eid)
+
     def apply(
         self,
         arc_id: str,
@@ -63,7 +116,10 @@ class AtomicApplyManager:
             if diff_hash in self._consumed:
                 raise ValueError("ALREADY_CONSUMED: This ledger_diff has already been applied")
 
-            # 5. Snapshot ledgers + canon/manuscript + canon/characters
+            # 5. Prevalidate ledger diff
+            self._prevalidate_ledger_diff(ledger_diff)
+
+            # 6. Snapshot ledgers + canon/manuscript + canon/characters
             snapshot_dir = self._root / "arcs" / arc_id / "archive" / f"snapshot_{diff_hash[:8]}"
             snapshot_dir.mkdir(parents=True, exist_ok=True)
 

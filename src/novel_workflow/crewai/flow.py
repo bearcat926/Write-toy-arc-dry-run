@@ -110,6 +110,43 @@ def _extract_proposal(raw_output: str) -> dict | None:
     return None
 
 
+def _extract_chapter_effect(raw_output: str, chapter_id: str) -> ChapterEffectReport:
+    """Extract effect-related fields from extractor output.
+
+    Attempts to parse structured data from the raw LLM output.
+    If effect data is missing, returns a ChapterEffectReport with default empty values.
+    """
+    try:
+        data = None
+        try:
+            data = json.loads(raw_output.strip())
+        except (json.JSONDecodeError, ValueError):
+            code_block = re.search(r'```(?:json)?\s*\n(.*?)\n```', raw_output, re.DOTALL)
+            if code_block:
+                try:
+                    data = json.loads(code_block.group(1).strip())
+                except (json.JSONDecodeError, ValueError):
+                    pass
+
+        if isinstance(data, dict):
+            return ChapterEffectReport(
+                chapter_id=chapter_id,
+                scene_goal=data.get("scene_goal", ""),
+                state_changes=data.get("state_changes", []),
+                character_choices=data.get("character_choices", []),
+                conflict_or_pressure_change=data.get("conflict_or_pressure_change", []),
+                new_reader_questions=data.get("new_reader_questions", []),
+                promises_paid_off=data.get("promises_paid_off", []),
+                promises_created=data.get("promises_created", []),
+                pov_boundary_status=data.get("pov_boundary_status", "pass"),
+                arc_contract_alignment=data.get("arc_contract_alignment", []),
+            )
+    except Exception:
+        pass
+
+    return ChapterEffectReport(chapter_id=chapter_id)
+
+
 def _run_revision_loop(
     root: Path,
     arc_id: str,
@@ -117,20 +154,119 @@ def _run_revision_loop(
     max_revisions: int = 2,
 ) -> None:
     """
-    Revision loop stub for production mode.
+    Revision loop for production mode.
     When gate.decision == 'rejected', iterates up to max_revisions times:
-      1. Mark rejected chapters
-      2. Rewrite chapters
-      3. Re-run review + proposal
-
-    Currently a no-op stub; production path needs real gate decision integration.
+      1. Mark rejected chapters and cascade to dependents
+      2. Rewrite rejected chapters using writer agent
+      3. Re-run auditor + extractor
+      4. Merge only fresh valid proposals
     """
+    aws_mgr = ArcWorkingStateManager(root)
     print(f"[NovelFlow] Revision loop triggered for {arc_id} (max {max_revisions} loops)")
-    # TODO: Implement revision loop for production path
-    # - Identify rejected chapters from gate feedback
-    # - Rewrite using writer agent
-    # - Re-audit and re-extract proposals
-    # - Re-attempt apply
+
+    aws_mgr.mark_chapters_rejected(arc_id, chapter_ids)
+    print(f"[NovelFlow] Marked chapters {chapter_ids} as rejected with cascade")
+
+    llm = _create_llm()
+    proposal_validator = ProposalValidator(root)
+
+    writer = Agent(
+        role="Novel Chapter Writer",
+        goal="Rewrite a chapter to fix the identified issues",
+        backstory="You are a skilled fiction writer who revises chapters based on feedback.",
+        llm=llm,
+        verbose=False,
+    )
+    auditor = Agent(
+        role="Continuity Auditor",
+        goal="Review the revised chapter for consistency.",
+        backstory="You are a meticulous continuity checker.",
+        llm=llm,
+        verbose=False,
+    )
+    extractor = Agent(
+        role="Knowledge Extractor",
+        goal="Extract narrative facts from the revised chapter as structured JSON.",
+        backstory="You identify narrative facts that need to be recorded in story ledgers.",
+        llm=llm,
+        verbose=False,
+    )
+
+    current_rejected = list(chapter_ids)
+    for revision in range(max_revisions):
+        if not current_rejected:
+            print(f"[NovelFlow] No rejected chapters remain after revision {revision}")
+            break
+
+        print(f"[NovelFlow] Revision {revision + 1}/{max_revisions}: re-writing {current_rejected}")
+        fresh_proposals: list[dict] = []
+        still_rejected: list[str] = []
+
+        for ch_id in current_rejected:
+            ch_num = int(ch_id.split("_")[1])
+            context = _build_context(root, arc_id, ch_num)
+
+            # Rewrite
+            writer_prompt = (
+                f"Rewrite chapter {ch_id} to fix continuity and quality issues.\n\n"
+                f"Context:\n{context}\n\nWrite ONLY the chapter content in markdown."
+            )
+            writer_result = writer.kickoff(writer_prompt)
+            content = writer_result.raw if hasattr(writer_result, 'raw') else str(writer_result)
+            safe_write_draft(root, f"arcs/{arc_id}/drafts/{ch_id}.md", content)
+
+            # Re-audit
+            draft_path = root / "arcs" / arc_id / "drafts" / f"{ch_id}.md"
+            draft_content = draft_path.read_text(encoding="utf-8", errors="replace")
+            auditor_prompt = (
+                f"Review revised chapter {ch_id} for continuity issues.\n\n"
+                f"Draft:\n{draft_content}\n\nContext:\n{context}\n\nWrite ONLY the review."
+            )
+            auditor_result = auditor.kickoff(auditor_prompt)
+            review_content = auditor_result.raw if hasattr(auditor_result, 'raw') else str(auditor_result)
+            safe_write_review(root, f"arcs/{arc_id}/reviews/{ch_id}_review.md", review_content)
+
+            # Re-extract
+            review_path = root / "arcs" / arc_id / "reviews" / f"{ch_id}_review.md"
+            review_text = review_path.read_text(encoding="utf-8", errors="replace")
+            extractor_prompt = (
+                f"Extract narrative facts from revised chapter {ch_id} as JSON.\n\n"
+                f"Draft:\n{draft_content}\n\nReview:\n{review_text}\n\n"
+                f"Output a JSON object with schema_version, claim, source_layer, "
+                f"source_artifact, evidence, confidence, target_ledger, operation, proposed_change.\n"
+                f"Return ONLY valid JSON."
+            )
+            extractor_result = extractor.kickoff(extractor_prompt)
+            raw_output = extractor_result.raw if hasattr(extractor_result, 'raw') else str(extractor_result)
+            proposal_data = _extract_proposal(raw_output)
+
+            if proposal_data:
+                try:
+                    proposal = LedgerUpdateProposal.model_validate(proposal_data)
+                    result = proposal_validator.validate(proposal)
+                    if result.is_valid:
+                        fresh_proposals.append(proposal_data)
+                    else:
+                        still_rejected.append(ch_id)
+                        print(f"[NovelFlow] Revised {ch_id} still has invalid proposal ({result.error_code})")
+                except Exception as e:
+                    still_rejected.append(ch_id)
+                    print(f"[NovelFlow] Revised {ch_id} proposal error: {e}")
+            else:
+                still_rejected.append(ch_id)
+                print(f"[NovelFlow] Revised {ch_id}: no proposal extracted")
+
+        if fresh_proposals:
+            for p_data in fresh_proposals:
+                proposal = LedgerUpdateProposal.model_validate(p_data)
+                ch = p_data.get("source_artifact", "").split("/")[-1].replace(".md", "")
+                aws_mgr.merge_proposal(arc_id, proposal, ch)
+            print(f"[NovelFlow] Merged {len(fresh_proposals)} fresh proposals")
+
+        current_rejected = still_rejected
+
+    if current_rejected:
+        print(f"[NovelFlow] Revision loop exhausted. Chapters still rejected: {current_rejected}")
 
 
 def run_novel_flow(
@@ -303,7 +439,11 @@ def run_novel_flow(
             pf.write(_json.dumps(progress_entry.model_dump(mode="json"), ensure_ascii=False) + "\n")
 
         # 1.3 ChapterEffectChecker integration (non-blocking)
-        effect_report = ChapterEffectReport(chapter_id=ch_id, scene_goal="auto-detected")
+        try:
+            effect_report = _extract_chapter_effect(raw_output, ch_id)
+        except Exception as e:
+            print(f"[NovelFlow] ChapterEffect extraction warning for {ch_id}: {e}")
+            effect_report = ChapterEffectReport(chapter_id=ch_id)
         _passed, _failures = effect_checker.check(effect_report)
         if not _passed:
             print(f"[NovelFlow] ChapterEffect warning for {ch_id}: {_failures}")

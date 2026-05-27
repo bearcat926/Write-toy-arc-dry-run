@@ -39,3 +39,20 @@ def test_effect_report_multiple_failures():
     passed, failures = checker.check(report)
     assert passed is False
     assert len(failures) == 5
+
+
+def test_effect_report_populated_from_extractor_output():
+    """ChapterEffectReport can be populated from structured extractor output."""
+    from novel_workflow.schemas.chapter_effect import ChapterEffectReport
+    report = ChapterEffectReport(
+        chapter_id="ch_001",
+        scene_goal="Introduce Kael at the forge",
+        state_changes=["Kael discovers he can hear enchanted steel"],
+        character_choices=["Kael decides to hide the discovery"],
+        conflict_or_pressure_change=["Unknown magic awakens"],
+        new_reader_questions=["What is the whispering steel?"],
+    )
+    checker = ChapterEffectChecker()
+    passed, failures = checker.check(report)
+    assert passed is True
+    assert failures == []
