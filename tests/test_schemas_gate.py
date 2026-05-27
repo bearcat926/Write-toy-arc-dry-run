@@ -41,3 +41,15 @@ def test_gate_record_rejected_no_evidence_required():
         source_artifacts=[],
     )
     assert gate.decision == "rejected"
+
+
+def test_rejected_gate_requires_evidence():
+    """Rejected gate with non-empty evidence is valid."""
+    from novel_workflow.validators.gate_validator import GateValidator
+    gate = GateRecord(
+        gate_id="ae_001", gate_type="arc_end", target_artifact="arc_001",
+        decision="rejected", author_input_evidence="Chapter 3 pacing is too slow",
+        author_id="local_author", source_artifacts=[],
+    )
+    v = GateValidator()
+    assert v.validate(gate) is True

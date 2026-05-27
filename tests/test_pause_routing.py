@@ -196,3 +196,14 @@ class TestRetryPolicy:
         event.retry_count += 1
         assert policy.is_retryable(event) is False
         assert policy.should_pause(event) is True
+
+    def test_retry_exhaustion_blocks_merge(self):
+        """Retry exhaustion should prevent AWS merge."""
+        policy = RetryPolicy(max_retries=2)
+        event = FailureEvent(
+            category=FailureCategory.MALFORMED_JSON,
+            source="proposal_validator",
+            retryable=True,
+            retry_count=2,
+        )
+        assert policy.should_pause(event) is True

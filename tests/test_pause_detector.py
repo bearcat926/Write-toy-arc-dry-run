@@ -1,5 +1,6 @@
 from novel_workflow.pause.pause_detector import EmergencyPauseDetector
 from novel_workflow.config import PauseType
+from novel_workflow.schemas.failure_event import FailureEvent, FailureCategory
 
 
 def test_path_traversal_is_hard_pause():
@@ -32,3 +33,20 @@ def test_creative_review_allows_continue():
     det = EmergencyPauseDetector()
     report = det.detect_pov_violation("char_a", "secret_x")
     assert any("Mark as intentional" in o for o in report.author_options)
+
+
+def test_pause_report_has_author_options():
+    """Pause report must include author options."""
+    det = EmergencyPauseDetector()
+    event = FailureEvent(category=FailureCategory.CANON_DIRECT_CONFLICT, source="aws_checker")
+    report = det.route_failure(event)
+    assert len(report.author_options) > 0
+    assert any("intentional" in opt.lower() or "continue" in opt.lower() for opt in report.author_options)
+
+
+def test_prevalidation_failure_is_hard_pause():
+    """Prevalidation failure should route to hard_pause."""
+    det = EmergencyPauseDetector()
+    event = FailureEvent(category=FailureCategory.APPLY_VALIDATION_FAIL, source="apply_manager")
+    report = det.route_failure(event)
+    assert report.pause_type.value == "hard_pause"

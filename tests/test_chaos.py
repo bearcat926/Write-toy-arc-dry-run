@@ -152,3 +152,15 @@ def test_case4b_consumed_persists_across_manager_instances(project_root: Path):
     mgr2 = AtomicApplyManager(project_root)
     with pytest.raises(ValueError, match="ALREADY_CONSUMED"):
         mgr2.apply("arc_001", gate, ["ch_001.md"], ledger_diff, None)
+
+
+# Case 5: Dashboard cannot be used as fact source
+def test_dashboard_cannot_be_fact_source(project_root: Path):
+    """Dashboard data cannot be used as canon/ledger apply input."""
+    dashboard = project_root / "workspace" / "dashboard_report.md"
+    dashboard.write_text("# Dashboard\n**Status:** derived\n**Source:** system script\n")
+    content = dashboard.read_text()
+    assert "derived" in content.lower()
+    guard = PathSafetyGuard(project_root)
+    with pytest.raises(PathSafetyError):
+        guard.check_write_path("workspace/dashboard_report.md", "system_script", artifact_type="canon_manuscript")

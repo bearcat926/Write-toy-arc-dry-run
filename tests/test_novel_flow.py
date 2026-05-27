@@ -23,3 +23,17 @@ def test_agents_import():
     assert writer.role == "Novel Chapter Writer"
     assert auditor.role == "Continuity Auditor"
     assert extractor.role == "Knowledge Extractor"
+
+
+def test_context_order_aws_before_canon(project_root: Path):
+    """AWS overlay should appear before canon in context."""
+    from novel_workflow.crewai.flow import _build_context
+    (project_root / "canon" / "approved_outline.md").write_text("# Outline")
+    (project_root / "ledgers" / "timeline.json").write_text('{"schema_version":"1.0","events":[]}')
+    (project_root / "arcs" / "arc_001" / "arc_working_state.json").write_text(
+        '{"schema_version":"1.0","entries":[{"state_id":"aws_001","source_chapter":"ch_001","key":"k","value":"v","status":"working_accepted","depends_on":[]}]}'
+    )
+    context = _build_context(project_root, "arc_001", 2)
+    aws_pos = context.find("Arc Working State")
+    canon_pos = context.find("Approved Outline")
+    assert aws_pos < canon_pos, "AWS should appear before canon in context"

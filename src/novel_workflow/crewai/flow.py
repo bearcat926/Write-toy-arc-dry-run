@@ -39,8 +39,15 @@ def _create_llm() -> LLM:
 
 
 def _build_context(root: Path, arc_id: str, current_ch: int) -> str:
-    """Build context from canon + ledgers + arc_working_state + previous chapters."""
+    """Build context from arc_working_state + canon + ledgers + previous chapters.
+
+    AWS appears before canon so the agent sees current arc progress first.
+    """
     parts = []
+
+    aws_path = root / "arcs" / arc_id / "arc_working_state.json"
+    if aws_path.exists():
+        parts.append(f"## Arc Working State\n{aws_path.read_text(encoding='utf-8', errors='replace')}")
 
     canon_outline = root / "canon" / "approved_outline.md"
     if canon_outline.exists():
@@ -48,10 +55,6 @@ def _build_context(root: Path, arc_id: str, current_ch: int) -> str:
 
     for ledger_file in (root / "ledgers").glob("*.json"):
         parts.append(f"## Ledger: {ledger_file.stem}\n{ledger_file.read_text(encoding='utf-8', errors='replace')}")
-
-    aws_path = root / "arcs" / arc_id / "arc_working_state.json"
-    if aws_path.exists():
-        parts.append(f"## Arc Working State\n{aws_path.read_text(encoding='utf-8', errors='replace')}")
 
     # Previous chapters: only include first 500 chars as summary to avoid context overflow
     MAX_CH_PREVIEW = 500

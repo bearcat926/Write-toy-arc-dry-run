@@ -33,3 +33,12 @@ def test_converge_cap_at_5():
     )]
     brief = conv.converge("ch_001", reviews)
     assert len(brief.items) == 5
+
+
+def test_parse_reviewer_output():
+    """Raw reviewer output can be parsed into ReviewReport."""
+    conv = ReviewConvergent()
+    raw = "blocking_issues: Timeline gap between ch1 and ch2\nrecommended_action: revise"
+    report = conv.parse_raw_review("continuity_auditor", raw)
+    assert report.reviewer_role == "continuity_auditor"
+    assert report.recommended_action == "revise"
