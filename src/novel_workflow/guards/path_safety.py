@@ -29,9 +29,12 @@ _SYSTEM_SCRIPT_ALLOWED = {
     "dashboard": _re.compile(r"^workspace/dashboard_report\.md$"),
     "canon_manuscript": _re.compile(r"^canon/manuscript/[^/]+\.md$"),
     "canon_characters": _re.compile(r"^canon/characters/character_mind_cards/[^/]+\.json$"),
+    "canon_manuscript_copy": _re.compile(r"^canon/manuscript/[^/]+\.md$"),
+    "canon_character_update": _re.compile(r"^canon/characters/character_mind_cards/[^/]+\.json$"),
     "ledgers": _re.compile(r"^ledgers/[^/]+\.json$"),
     "arc_contract": _re.compile(r"^arcs/[^/]+/arc_contract\.md$"),
     "direction_gate": _re.compile(r"^gates/direction_gate\.json$"),
+    "inverse_diff": _re.compile(r"^arcs/[^/]+/reports/inverse_diff\.json$"),
 }
 
 

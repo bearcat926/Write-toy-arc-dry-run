@@ -45,12 +45,7 @@ class TestRouteFailureHardPause:
         report = self.detector.route_failure(event)
         assert report.pause_type == PauseType.HARD_PAUSE
 
-
-class TestRouteFailureCreativeReview:
-    def setup_method(self):
-        self.detector = EmergencyPauseDetector()
-
-    def test_canon_conflict_is_creative_review(self):
+    def test_canon_conflict_is_hard_pause(self):
         event = FailureEvent(
             category=FailureCategory.CANON_DIRECT_CONFLICT,
             source="audit",
@@ -58,9 +53,14 @@ class TestRouteFailureCreativeReview:
             evidence="Character died in ch01 but appears in ch03",
         )
         report = self.detector.route_failure(event)
-        assert report.pause_type == PauseType.CREATIVE_REVIEW
+        assert report.pause_type == PauseType.HARD_PAUSE
         assert "canon_direct_conflict" in report.reason
         assert report.evidence == "Character died in ch01 but appears in ch03"
+
+
+class TestRouteFailureCreativeReview:
+    def setup_method(self):
+        self.detector = EmergencyPauseDetector()
 
     def test_audit_blocking_is_creative_review(self):
         event = FailureEvent(

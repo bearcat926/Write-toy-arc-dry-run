@@ -81,3 +81,48 @@ def test_plugin_cannot_write_canon(guard: PathSafetyGuard):
 def test_plugin_can_write_inspiration(guard: PathSafetyGuard):
     result = guard.check_write_path("inspiration/idea_001.md", "plugin")
     assert result.name == "idea_001.md"
+
+
+def test_system_script_arc_contract_succeeds(guard: PathSafetyGuard, project_root: Path):
+    result = guard.check_write_path("arcs/arc_001/arc_contract.md", "system_script", artifact_type="arc_contract")
+    assert result.name == "arc_contract.md"
+
+
+def test_system_script_canon_manuscript_copy_succeeds(guard: PathSafetyGuard, project_root: Path):
+    result = guard.check_write_path("canon/manuscript/ch_001.md", "system_script", artifact_type="canon_manuscript_copy")
+    assert result.name == "ch_001.md"
+
+
+def test_system_script_canon_character_update_succeeds(guard: PathSafetyGuard, project_root: Path):
+    result = guard.check_write_path(
+        "canon/characters/character_mind_cards/hero.json", "system_script", artifact_type="canon_character_update"
+    )
+    assert result.name == "hero.json"
+
+
+def test_system_script_inverse_diff_succeeds(guard: PathSafetyGuard, project_root: Path):
+    result = guard.check_write_path("arcs/arc_001/reports/inverse_diff.json", "system_script", artifact_type="inverse_diff")
+    assert result.name == "inverse_diff.json"
+
+
+def test_system_script_inverse_diff_wrong_path_rejected(guard: PathSafetyGuard):
+    with pytest.raises(PathSafetyError, match="SYSTEM_SCRIPT_ARTIFACT_MISMATCH"):
+        guard.check_write_path("arcs/arc_001/reports/other.json", "system_script", artifact_type="inverse_diff")
+
+
+def test_system_script_known_types_succeed_unknown_rejected(guard: PathSafetyGuard):
+    """Known artifact types should succeed; unknown types should be rejected."""
+    known_artifacts = [
+        ("arcs/arc_001/arc_working_state.json", "arc_working_state"),
+        ("workspace/progress.jsonl", "progress"),
+        ("arcs/arc_001/reports/ledger_diff.json", "ledger_diff"),
+        ("workspace/consumed_hashes.json", "consumed_hashes"),
+        ("workspace/dashboard_report.md", "dashboard"),
+        ("arcs/arc_001/reports/apply_record.json", "apply_record"),
+        ("arcs/arc_001/arc_contract.md", "arc_contract"),
+    ]
+    for path, artifact_type in known_artifacts:
+        guard.check_write_path(path, "system_script", artifact_type=artifact_type)
+
+    with pytest.raises(PathSafetyError, match="UNKNOWN_ARTIFACT_TYPE"):
+        guard.check_write_path("workspace/some_file.txt", "system_script", artifact_type="bogus_type")

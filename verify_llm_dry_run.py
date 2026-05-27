@@ -41,7 +41,7 @@ def verify_dry_run(root: Path) -> tuple[bool, list[str]]:
         if len(aws.get("entries", [])) == 0:
             failures.append("arc_working_state has 0 entries")
 
-    # 4. Check apply_record exists
+    # 4. Check apply_record exists and has valid diff_hash
     apply_record = root / "arcs" / "arc_001" / "reports" / "apply_record.json"
     if not apply_record.exists():
         failures.append("apply_record.json missing")
@@ -49,6 +49,8 @@ def verify_dry_run(root: Path) -> tuple[bool, list[str]]:
         record = json.loads(apply_record.read_text(encoding="utf-8"))
         if record.get("result") != "success":
             failures.append(f"Apply record result: {record.get('result')}")
+        if not record.get("ledger_diff_hash"):
+            failures.append("apply_record.json has empty ledger_diff_hash")
 
     # 5. Check drafts exist
     drafts = root / "arcs" / "arc_001" / "drafts"

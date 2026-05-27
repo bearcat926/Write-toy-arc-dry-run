@@ -47,12 +47,13 @@ class EmergencyPauseDetector:
 
     def route_failure(self, event: FailureEvent) -> PauseReport:
         """Route a failure event to the appropriate pause type."""
-        # Hard pauses: security, path, gate evidence, apply validation, retry exhaustion
+        # Hard pauses: security, path, gate evidence, apply validation, retry exhaustion, canon conflict
         if event.category in (
             FailureCategory.SECURITY_VIOLATION,
             FailureCategory.PATH_VIOLATION,
             FailureCategory.GATE_EVIDENCE_MISSING,
             FailureCategory.APPLY_VALIDATION_FAIL,
+            FailureCategory.CANON_DIRECT_CONFLICT,
         ):
             return PauseReport(
                 pause_type=PauseType.HARD_PAUSE,
@@ -63,9 +64,8 @@ class EmergencyPauseDetector:
                 author_options=["A) Fix the issue and retry", "D) Archive current arc"],
             )
 
-        # Creative review: canon conflict, AWS conflict, audit blocking, claim-evidence mismatch
+        # Creative review: AWS conflict, audit blocking, claim-evidence mismatch
         if event.category in (
-            FailureCategory.CANON_DIRECT_CONFLICT,
             FailureCategory.AWS_CANON_CONFLICT,
             FailureCategory.AUDIT_BLOCKING,
             FailureCategory.CLAIM_EVIDENCE_MISMATCH,

@@ -41,7 +41,7 @@ def test_pause_report_has_author_options():
     event = FailureEvent(category=FailureCategory.CANON_DIRECT_CONFLICT, source="aws_checker")
     report = det.route_failure(event)
     assert len(report.author_options) > 0
-    assert any("intentional" in opt.lower() or "continue" in opt.lower() for opt in report.author_options)
+    assert any("fix" in opt.lower() or "archive" in opt.lower() for opt in report.author_options)
 
 
 def test_prevalidation_failure_is_hard_pause():

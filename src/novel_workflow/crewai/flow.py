@@ -22,6 +22,7 @@ from ..schemas.progress import ProgressEntry
 from ..schemas.chapter_effect import ChapterEffectReport
 from ..validators.proposal_validator import ProposalValidator
 from ..metrics.collector import MetricsCollector, ChapterMetrics
+from ..guards.path_safety import PathSafetyGuard
 from .config import LLM_MODEL, LLM_BASE_URL, LLM_API_KEY
 from .tools import safe_write_draft, safe_write_review, safe_write_proposal
 
@@ -297,6 +298,7 @@ def run_novel_flow(
     llm = _create_llm()
     aws_mgr = ArcWorkingStateManager(root)
     proposal_validator = ProposalValidator(root)
+    guard = PathSafetyGuard(root)
 
     # Create arc directories
     for d in ["drafts", "reviews", "proposals", "reports", "gates", "checkpoints", "archive"]:
@@ -309,6 +311,7 @@ def run_novel_flow(
     # Create arc_contract.md template if not exists
     arc_contract_path = root / "arcs" / arc_id / "arc_contract.md"
     if not arc_contract_path.exists():
+        guard.check_write_path(f"arcs/{arc_id}/arc_contract.md", "system_script", artifact_type="arc_contract")
         arc_contract_path.write_text(
             f"# Arc Contract: {arc_id}\n\n"
             f"## Hard Requirements\n\n"
@@ -438,6 +441,7 @@ def run_novel_flow(
             details={"proposal_merged": proposal_merged_flag},
             contains_narrative_fact=False,
         )
+        guard.check_write_path("workspace/progress.jsonl", "system_script", artifact_type="progress")
         with open(root / "workspace" / "progress.jsonl", "a", encoding="utf-8") as pf:
             pf.write(_json.dumps(progress_entry.model_dump(mode="json"), ensure_ascii=False) + "\n")
 
@@ -488,6 +492,7 @@ def run_novel_flow(
     gen = LedgerDiffGenerator()
     diff_data = gen.generate(validated_proposals)
     ledger_diff = LedgerDiff(arc_id=arc_id, operations=diff_data["operations"])
+    guard.check_write_path(f"arcs/{arc_id}/reports/ledger_diff.json", "system_script", artifact_type="ledger_diff")
     (root / "arcs" / arc_id / "reports" / "ledger_diff.json").write_text(
         json.dumps(ledger_diff.model_dump(mode="json"), indent=2)
     )
@@ -506,6 +511,11 @@ def run_novel_flow(
     else:
         gate = arc_end_gate
 
+    # Check gate decision before apply
+    if gate.decision == "rejected":
+        print(f"[NovelFlow] Gate rejected. Hard pause - revision loop deferred.")
+        return {"result": "hard_pause_gate_rejected", "chapters": chapter_results, "apply_result": None}
+
     # Atomic apply
     apply_mgr = AtomicApplyManager(root)
     draft_files = [f"{ch_id}.md" for ch_id in chapter_results]
@@ -514,6 +524,7 @@ def run_novel_flow(
 
     # 1.6 dashboard_report.md generation
     dashboard_path = root / "workspace" / "dashboard_report.md"
+    guard.check_write_path("workspace/dashboard_report.md", "system_script", artifact_type="dashboard")
     dashboard_lines = [
         f"# Dashboard Report: {arc_id}",
         f"",

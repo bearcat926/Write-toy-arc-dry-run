@@ -7,6 +7,7 @@ from ..schemas.gate import GateRecord
 from ..schemas.diff import LedgerDiff, CanonDiff, ApplyRecord
 from ..validators.gate_validator import GateValidator
 from ..guards.lock_manager import LockManager
+from ..guards.path_safety import PathSafetyGuard
 from .canonicalizer import Canonicalizer
 
 CONSUMED_FILE = "consumed_hashes.json"
@@ -19,6 +20,7 @@ class AtomicApplyManager:
         self._canonicalizer = Canonicalizer(project_root)
         self._consumed: set[str] = self._load_consumed()
         self._lock_manager = LockManager()
+        self._guard = PathSafetyGuard(project_root)
 
     def _load_consumed(self) -> set[str]:
         """Load consumed hashes from persistent storage."""
@@ -34,6 +36,7 @@ class AtomicApplyManager:
     def _save_consumed(self):
         """Save consumed hashes to persistent storage."""
         path = self._root / "workspace" / CONSUMED_FILE
+        self._guard.check_write_path("workspace/consumed_hashes.json", "system_script", artifact_type="consumed_hashes")
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text(
             json.dumps({"consumed_hashes": sorted(self._consumed)}, indent=2),
@@ -163,6 +166,7 @@ class AtomicApplyManager:
                     canon_diff_hash="",
                     result="success",
                 )
+                self._guard.check_write_path(f"arcs/{arc_id}/reports/apply_record.json", "system_script", artifact_type="apply_record")
                 record_path = self._root / "arcs" / arc_id / "reports" / "apply_record.json"
                 record_path.write_text(json.dumps(record.model_dump(), indent=2, ensure_ascii=False, default=str))
 
@@ -193,6 +197,7 @@ class AtomicApplyManager:
         for op in diff.operations:
             ledger = op["target_ledger"]
             ledger_path = self._root / "ledgers" / f"{ledger}.json"
+            self._guard.check_write_path(f"ledgers/{ledger}.json", "system_script", artifact_type="ledgers")
             if not ledger_path.exists():
                 ledger_path.write_text(json.dumps({"schema_version": "1.0", f"{ledger}_entries": []}, indent=2))
             data = json.loads(ledger_path.read_text())
@@ -204,6 +209,10 @@ class AtomicApplyManager:
 
     def _apply_canon_diff(self, diff: CanonDiff):
         for update in diff.character_updates:
+            self._guard.check_write_path(
+                f"canon/characters/character_mind_cards/{update['character_id']}.json",
+                "system_script", artifact_type="canon_character_update"
+            )
             target = self._root / "canon" / "characters" / "character_mind_cards" / f"{update['character_id']}.json"
             target.parent.mkdir(parents=True, exist_ok=True)
             target.write_text(json.dumps(update, indent=2, ensure_ascii=False))
