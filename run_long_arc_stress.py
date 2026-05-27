@@ -1,19 +1,18 @@
 """
-Long arc stress test - 10 chapter arc with 3-5 characters, foreshadowing, POV switching.
-Requires OPENAI_API_KEY environment variable.
-
+Long arc stress test - modular version.
+Runs in batches of 3 chapters to avoid LLM timeout.
 Usage:
-    export OPENAI_API_KEY="your-key"
-    export OPENAI_API_BASE="https://your-endpoint/v1"
-    export OPENAI_MODEL_NAME="your-model"
-    python run_long_arc_stress.py
+    export OPENAI_API_KEY=... OPENAI_API_BASE=... OPENAI_MODEL_NAME=...
+    python run_long_arc_stress.py           # run all 10 chapters
+    python run_long_arc_stress.py --batch 3 # run chapters 1-3 only
 """
 import json
 import os
 import sys
+import argparse
+import time
 from pathlib import Path
 
-# Add src to path
 sys.path.insert(0, str(Path(__file__).parent / "src"))
 
 from novel_workflow.project_init import init_project
@@ -22,104 +21,95 @@ from novel_workflow.metrics.collector import MetricsCollector
 
 
 def setup_stress_project(root: Path):
-    """Initialize a stress test project with richer content."""
+    """Initialize stress test project."""
     init_project(root)
-
-    # Canon state
     (root / "canon" / "canon_state.json").write_text(json.dumps({
         "schema_version": "1.0",
         "setting": "A sprawling fantasy kingdom with multiple factions vying for control of ancient magic",
-        "protagonist": "Kael, a blacksmith's apprentice who discovers he can hear the whispers of enchanted steel",
-        "characters": {
-            "kael": {"role": "protagonist", "age": 17, "trait": "brave but inexperienced"},
-            "maren": {"role": "deuteragonist", "age": 19, "trait": "brilliant healer with a secret past"},
-            "torren": {"role": "mentor", "age": 45, "trait": "master blacksmith hiding forbidden knowledge"},
-            "voss": {"role": "antagonist", "age": 35, "trait": "ruthless magic collector"},
-            "liora": {"role": "ally", "age": 22, "trait": "nomadic scout with loyalty conflicts"},
-        },
+        "protagonist": "Kael, a blacksmith's apprentice who discovers he can hear enchanted steel",
     }, indent=2))
 
-    # Approved outline
     (root / "canon" / "approved_outline.md").write_text("""# The Whispering Steel
 
-## Genre
-Epic Fantasy / Young Adult
-
-## Core Theme
-Power corrupts, but knowledge of one's limits protects.
+## Genre: Epic Fantasy / YA
 
 ## Arc 1: The Awakening (10 chapters)
-- ch_001: Kael discovers he can hear enchanted steel at Torren's forge
-- ch_002: Maren arrives with a wounded traveler carrying a strange blade
-- ch_003: Torren reveals fragments of the ancient smithing tradition
-- ch_004: Voss's agents arrive in Millhaven asking questions
-- ch_005: Kael and Maren flee with the enchanted blade
-- ch_006: Liora joins them as a guide through the wilderness
-- ch_007: A betrayal reveals someone has been tracking them
-- ch_008: Kael forges his first enchanted weapon
-- ch_009: Confrontation with Voss's lieutenant
-- ch_010: The truth about Torren's past changes everything
+- ch_001: Kael hears enchanted steel at Torren's forge
+- ch_002: Maren arrives with a wounded traveler
+- ch_003: Torren reveals ancient smithing tradition
+- ch_004: Voss's agents arrive in Millhaven
+- ch_005: Kael and Maren flee with the blade
+- ch_006: Liora joins as wilderness guide
+- ch_007: A betrayal reveals tracking (Maren POV)
+- ch_008: Kael forges his first weapon
+- ch_009: Confrontation with Voss's lieutenant (Maren POV)
+- ch_010: Torren's past changes everything
 
 ## Hard Requirements
-- Kael must make at least one meaningful choice per chapter
-- The magic system (enchanted steel whispers) must be consistently applied
-- Foreshadowing: the broken sword (ch_001) must pay off by ch_010
+- Kael makes meaningful choice each chapter
+- Magic system consistency
+- Foreshadowing: broken sword (ch_001) pays off by ch_010
 
 ## Absolute Prohibitions
 - Kael must not die
-- No modern technology or language
-- No deus ex machina magic solutions
-
-## POV Rules
-- Primary POV: Kael (7 chapters)
-- Secondary POV: Maren (3 chapters, ch_002, ch_007, ch_009)
-- No character knows information outside their POV without explicit source
+- No modern technology
+- No deus ex machina
 """, encoding="utf-8")
 
-    # Ledgers
     for ledger, structure in [
         ("timeline.json", {"events": []}),
         ("character_knowledge.json", {"character_knowledge_entries": []}),
         ("foreshadowing.json", {"foreshadowing_entries": []}),
     ]:
         (root / "ledgers" / ledger).write_text(
-            json.dumps({"schema_version": "1.0", **structure}, indent=2),
-            encoding="utf-8",
-        )
+            json.dumps({"schema_version": "1.0", **structure}, indent=2), encoding="utf-8")
 
     print(f"Stress project initialized at {root}")
 
 
-def run_stress_test():
-    """Run 10-chapter stress test."""
-    if not os.environ.get("OPENAI_API_KEY"):
-        print("ERROR: OPENAI_API_KEY not set. Export it before running.")
-        print("  export OPENAI_API_KEY='your-key'")
-        print("  export OPENAI_API_BASE='https://your-endpoint/v1'")
-        print("  export OPENAI_MODEL_NAME='your-model'")
-        sys.exit(1)
-
-    root = (Path(__file__).parent / "toy_project_stress").resolve()
-    setup_stress_project(root)
-
-    print("\n" + "="*60)
-    print("Starting 10-chapter stress test...")
-    print("="*60 + "\n")
+def run_stress_batch(root: Path, start_ch: int, end_ch: int) -> dict:
+    """Run a batch of chapters."""
+    chapters = end_ch - start_ch + 1
+    print(f"\n{'='*60}")
+    print(f"Running chapters {start_ch}-{end_ch} ({chapters} chapters)")
+    print(f"{'='*60}\n")
 
     result = run_novel_flow(
         project_root=str(root),
         arc_id="arc_001",
-        chapters_total=10,
+        chapters_total=end_ch,
+        start_ch=args.start,
         dry_run=True,
     )
+    return result
 
-    # Generate metrics report
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--batch", type=int, default=10, help="Number of chapters to run")
+    parser.add_argument("--start", type=int, default=1, help="Start chapter")
+    args = parser.parse_args()
+
+    if not os.environ.get("OPENAI_API_KEY"):
+        print("ERROR: Set OPENAI_API_KEY, OPENAI_API_BASE, OPENAI_MODEL_NAME")
+        sys.exit(1)
+
+    root = (Path(__file__).parent / "toy_project_stress").resolve()
+
+    # Only init if fresh
+    if not (root / "canon" / "canon_state.json").exists():
+        setup_stress_project(root)
+
+    end_ch = args.start + args.batch - 1
+    result = run_stress_batch(root, args.start, end_ch)
+
+    # Metrics report
     collector = MetricsCollector(root)
     try:
         report = collector.generate_report("arc_001")
-        print("\n" + "="*60)
+        print(f"\n{'='*60}")
         print("METRICS REPORT")
-        print("="*60)
+        print(f"{'='*60}")
         print(f"Chapters: {report.chapters_total}")
         print(f"Proposal accept rate: {report.proposal_accept_rate:.2%}")
         print(f"Audit fail rate: {report.audit_fail_rate:.2%}")
@@ -132,7 +122,3 @@ def run_stress_test():
         print(f"Metrics error: {e}")
 
     print(f"\nApply result: {result.get('apply_result')}")
-
-
-if __name__ == "__main__":
-    run_stress_test()

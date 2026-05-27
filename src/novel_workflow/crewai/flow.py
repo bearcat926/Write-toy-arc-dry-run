@@ -31,7 +31,8 @@ def _create_llm() -> LLM:
         model=f"openai/{LLM_MODEL}",
         base_url=LLM_BASE_URL,
         api_key=LLM_API_KEY,
-        max_tokens=32000,
+        max_tokens=8000,
+        timeout=300,  # 5 min timeout per LLM call
     )
     llm.supports_function_calling = lambda: True
     return llm
@@ -52,10 +53,16 @@ def _build_context(root: Path, arc_id: str, current_ch: int) -> str:
     if aws_path.exists():
         parts.append(f"## Arc Working State\n{aws_path.read_text(encoding='utf-8', errors='replace')}")
 
+    # Previous chapters: only include first 500 chars as summary to avoid context overflow
+    MAX_CH_PREVIEW = 500
     for prev_ch in range(1, current_ch):
         prev_path = root / "arcs" / arc_id / "drafts" / f"ch_{prev_ch:03d}.md"
         if prev_path.exists():
-            parts.append(f"## Previous Chapter ch_{prev_ch:03d}\n{prev_path.read_text(encoding='utf-8', errors='replace')}")
+            full_text = prev_path.read_text(encoding='utf-8', errors='replace')
+            preview = full_text[:MAX_CH_PREVIEW]
+            if len(full_text) > MAX_CH_PREVIEW:
+                preview += f"\n... ({len(full_text) - MAX_CH_PREVIEW} more chars)"
+            parts.append(f"## Previous Chapter ch_{prev_ch:03d} (summary)\n{preview}")
 
     return "\n\n".join(parts) if parts else "(empty project)"
 
@@ -104,6 +111,7 @@ def run_novel_flow(
     project_root: str | Path,
     arc_id: str = "arc_001",
     chapters_total: int = 3,
+    start_ch: int = 1,
     dry_run: bool = False,
     arc_end_gate: GateRecord | None = None,
 ) -> dict:
@@ -112,6 +120,7 @@ def run_novel_flow(
     Returns a dict with results and file paths.
 
     Args:
+        start_ch: First chapter number to generate (1-based). Allows resuming from a checkpoint.
         dry_run: If True, auto-approves arc_end gate (for testing only).
                  If False, arc_end_gate must be provided by the caller.
         arc_end_gate: Gate record from the author. Required when dry_run=False.
@@ -183,40 +192,36 @@ def run_novel_flow(
     effect_checker = ChapterEffectChecker()
     chapter_start = time.time()
 
-    for ch_num in range(1, chapters_total + 1):
+    for ch_num in range(start_ch, chapters_total + 1):
         ch_id = f"ch_{ch_num:03d}"
         print(f"\n[NovelFlow] === Chapter {ch_id} ===")
 
         context = _build_context(root, arc_id, ch_num)
 
         # Writer
-        print(f"[NovelFlow] Writer starting...")
-        writer_result = writer.kickoff(
-            f"Write chapter {ch_id} of the story.\n\n"
-            f"Story context:\n{context}\n\n"
-            f"Write ONLY the chapter content in markdown format."
-        )
+        writer_prompt = f"Write chapter {ch_id} of the story.\n\nStory context:\n{context}\n\nWrite ONLY the chapter content in markdown format."
+        print(f"[TIMER] ch={ch_id} agent=Writer prompt_len={len(writer_prompt)} starting...")
+        _t0 = time.time()
+        writer_result = writer.kickoff(writer_prompt)
+        print(f"[TIMER] ch={ch_id} agent=Writer elapsed={time.time()-_t0:.1f}s")
         content = writer_result.raw if hasattr(writer_result, 'raw') else str(writer_result)
         draft_path = safe_write_draft(root, f"arcs/{arc_id}/drafts/{ch_id}.md", content)
         print(f"[NovelFlow] Draft saved to {draft_path}")
 
         # Auditor
         draft_content = draft_path.read_text(encoding="utf-8", errors="replace")
-        print(f"[NovelFlow] Auditor starting...")
-        auditor_result = auditor.kickoff(
-            f"Review chapter {ch_id} for continuity issues.\n\n"
-            f"Draft:\n{draft_content}\n\n"
-            f"Story context:\n{context}\n\n"
-            f"Write ONLY the review content."
-        )
+        auditor_prompt = f"Review chapter {ch_id} for continuity issues.\n\nDraft:\n{draft_content}\n\nStory context:\n{context}\n\nWrite ONLY the review content."
+        print(f"[TIMER] ch={ch_id} agent=Auditor prompt_len={len(auditor_prompt)} starting...")
+        _t0 = time.time()
+        auditor_result = auditor.kickoff(auditor_prompt)
+        print(f"[TIMER] ch={ch_id} agent=Auditor elapsed={time.time()-_t0:.1f}s")
         content = auditor_result.raw if hasattr(auditor_result, 'raw') else str(auditor_result)
         review_path = safe_write_review(root, f"arcs/{arc_id}/reviews/{ch_id}_review.md", content)
         print(f"[NovelFlow] Review saved to {review_path}")
 
         # Extractor
         review_content = review_path.read_text(encoding="utf-8", errors="replace")
-        print(f"[NovelFlow] Extractor starting...")
-        extractor_result = extractor.kickoff(
+        extractor_prompt = (
             f"Extract narrative facts from chapter {ch_id} as JSON.\n\n"
             f"Draft:\n{draft_content}\n\n"
             f"Review:\n{review_content}\n\n"
@@ -228,6 +233,10 @@ def run_novel_flow(
             f'"proposed_change": {{"event_id": "...", "summary": "..."}}}}\n\n'
             f"Output ONLY the JSON, no other text."
         )
+        print(f"[TIMER] ch={ch_id} agent=Extractor prompt_len={len(extractor_prompt)} starting...")
+        _t0 = time.time()
+        extractor_result = extractor.kickoff(extractor_prompt)
+        print(f"[TIMER] ch={ch_id} agent=Extractor elapsed={time.time()-_t0:.1f}s")
         raw_output = extractor_result.raw if hasattr(extractor_result, 'raw') else str(extractor_result)
         proposal_data = _extract_proposal(raw_output)
         proposal_merged_flag = False
