@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from pathlib import Path, PurePosixPath
 from ..schemas.proposal import LedgerUpdateProposal
 from ..config import LEDGER_OPERATIONS
+from .source_artifact_policy import validate_source_artifact
 
 
 @dataclass
@@ -33,6 +34,13 @@ class ProposalValidator:
                 error_code=f"UNSAFE_SOURCE_PATH: {proposal.source_artifact}",
                 error_category="semantic_invalid",
             )
+
+        # Phase 2: source artifact policy (denylist + layer + derived check)
+        source_result = validate_source_artifact(
+            proposal.source_layer, proposal.source_artifact
+        )
+        if not source_result.is_valid:
+            return source_result
 
         # Check source artifact exists
         artifact_path = self._root / proposal.source_artifact
