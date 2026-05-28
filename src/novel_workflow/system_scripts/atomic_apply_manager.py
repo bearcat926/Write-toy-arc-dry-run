@@ -7,6 +7,8 @@ from ..schemas.gate import GateRecord
 from ..schemas.diff import LedgerDiff, CanonDiff, ApplyRecord
 from ..validators.gate_validator import GateValidator
 from ..validators.schema_validator import SchemaValidator
+from ..validators.derived_artifact_policy import is_derived_artifact
+from ..validators.error_codes import APPLY_DERIVED_SOURCE_REJECTED
 from ..guards.lock_manager import LockManager
 from ..guards.path_safety import PathSafetyGuard
 from .canonicalizer import Canonicalizer
@@ -73,6 +75,13 @@ class AtomicApplyManager:
         for op in diff.operations:
             target = op.get("target_ledger", "")
             operation = op.get("operation", "")
+
+            # Phase 2: reject derived sources in apply pipeline
+            source_artifact = op.get("source_artifact", "")
+            if source_artifact and is_derived_artifact(source_artifact):
+                raise ValueError(f"{APPLY_DERIVED_SOURCE_REJECTED}: {source_artifact}")
+            if op.get("is_derived") is True:
+                raise ValueError(f"{APPLY_DERIVED_SOURCE_REJECTED}: is_derived=true")
 
             if target not in VALID_LEDGERS:
                 raise ValueError(f"INVALID_LEDGER: {target}")

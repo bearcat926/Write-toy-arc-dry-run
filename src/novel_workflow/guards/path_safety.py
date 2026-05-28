@@ -35,6 +35,11 @@ _SYSTEM_SCRIPT_ALLOWED = {
     "arc_contract": _re.compile(r"^arcs/[^/]+/arc_contract\.md$"),
     "direction_gate": _re.compile(r"^gates/direction_gate\.json$"),
     "inverse_diff": _re.compile(r"^arcs/[^/]+/reports/inverse_diff\.json$"),
+    # Phase 2 derived artifacts
+    "narrative_summary": _re.compile(r"^workspace/summaries/ch_\d{3}_summary\.json$"),
+    "arc_summary": _re.compile(r"^workspace/summaries/arc_[^/]+_summary\.json$"),
+    "retrieval_trace": _re.compile(r"^workspace/retrieval_traces/ch_\d{3}\.jsonl$"),
+    "phase2_meta": _re.compile(r"^workspace/phase2/meta\.json$"),
 }
 
 
