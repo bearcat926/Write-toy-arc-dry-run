@@ -52,7 +52,24 @@ def verify_dry_run(root: Path) -> tuple[bool, list[str]]:
         if not record.get("ledger_diff_hash"):
             failures.append("apply_record.json has empty ledger_diff_hash")
 
-    # 5. Check drafts exist
+    # 5. Check 3 gate files exist and are valid
+    gates_dir = root / "arcs" / "arc_001" / "gates"
+    expected_gates = ["direction_gate.json", "arc_start_gate.json", "arc_end_gate.json"]
+    for gate_name in expected_gates:
+        gate_path = gates_dir / gate_name
+        if not gate_path.exists():
+            failures.append(f"Gate file missing: {gate_name}")
+        else:
+            try:
+                gate_data = json.loads(gate_path.read_text(encoding="utf-8"))
+                if not gate_data.get("gate_id"):
+                    failures.append(f"Gate {gate_name}: missing gate_id")
+                if gate_data.get("schema_version") != "1.0":
+                    failures.append(f"Gate {gate_name}: invalid schema_version")
+            except json.JSONDecodeError:
+                failures.append(f"Gate {gate_name}: invalid JSON")
+
+    # 6. Check drafts exist
     drafts = root / "arcs" / "arc_001" / "drafts"
     if drafts.exists():
         draft_files = list(drafts.glob("ch_*.md"))
@@ -76,6 +93,7 @@ if __name__ == "__main__":
         print(f"  - ledgers: timeline, character_knowledge, foreshadowing updated")
         print(f"  - arc_working_state: entries present")
         print(f"  - apply_record: success")
+        print(f"  - gates: direction, arc_start, arc_end")
     else:
         print("DRY RUN VERIFICATION: FAILED")
         for f in failures:

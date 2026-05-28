@@ -2,10 +2,11 @@ import hashlib
 import json
 import shutil
 from pathlib import Path
-from ..config import FORESHADOW_TRANSITIONS, LEDGER_OPERATIONS
+from ..config import FORESHADOW_TRANSITIONS, LEDGER_OPERATIONS, SUPPORTED_SCHEMA_VERSIONS
 from ..schemas.gate import GateRecord
 from ..schemas.diff import LedgerDiff, CanonDiff, ApplyRecord
 from ..validators.gate_validator import GateValidator
+from ..validators.schema_validator import SchemaValidator
 from ..guards.lock_manager import LockManager
 from ..guards.path_safety import PathSafetyGuard
 from .canonicalizer import Canonicalizer
@@ -17,6 +18,7 @@ class AtomicApplyManager:
     def __init__(self, project_root: Path):
         self._root = project_root
         self._gate_validator = GateValidator()
+        self._schema_validator = SchemaValidator()
         self._canonicalizer = Canonicalizer(project_root)
         self._consumed: set[str] = self._load_consumed()
         self._lock_manager = LockManager()
@@ -106,31 +108,37 @@ class AtomicApplyManager:
         draft_files: list[str],
         ledger_diff: LedgerDiff,
         canon_diff: CanonDiff | None,
+        dry_run: bool = False,
     ) -> dict:
         # 1. Validate gate
-        self._gate_validator.validate(gate_record)
+        self._gate_validator.validate(gate_record, dry_run=dry_run)
 
-        # 2. Compute diff hash
+        # 2. Validate ledger_diff schema version (P1.3)
+        self._schema_validator.validate(ledger_diff.model_dump(mode="json"))
+
+        # 3. Compute diff hash
         diff_hash = self._diff_hash(ledger_diff)
 
-        # 3. Lock critical section
+        # 4. Lock critical section
         with self._lock_manager.hold(f"apply_{arc_id}"):
-            # 4. Validate not consumed (persistent)
+            # 5. Validate not consumed (persistent)
             if diff_hash in self._consumed:
                 raise ValueError("ALREADY_CONSUMED: This ledger_diff has already been applied")
 
-            # 5. Prevalidate ledger diff
+            # 6. Prevalidate ledger diff
             self._prevalidate_ledger_diff(ledger_diff)
 
-            # 6. Snapshot ledgers + canon/manuscript + canon/characters
+            # 7. Snapshot ledgers + canon/manuscript + canon/characters
             snapshot_dir = self._root / "arcs" / arc_id / "archive" / f"snapshot_{diff_hash[:8]}"
             snapshot_dir.mkdir(parents=True, exist_ok=True)
 
-            # Snapshot ledgers
+            # Snapshot ledgers (record pre-existing files for rollback P1.4)
             ledgers_snap = snapshot_dir / "ledgers"
             ledgers_snap.mkdir(exist_ok=True)
+            pre_existing_ledgers: set[str] = set()
             for f in (self._root / "ledgers").glob("*.json"):
                 shutil.copy2(f, ledgers_snap / f.name)
+                pre_existing_ledgers.add(f.name)
 
             # Snapshot canon/manuscript
             manuscript_src = self._root / "canon" / "manuscript"
@@ -149,17 +157,17 @@ class AtomicApplyManager:
                 shutil.copytree(characters_src, characters_snap)
 
             try:
-                # 6. Canonicalize
+                # 8. Canonicalize
                 self._canonicalizer.canonicalize(arc_id, draft_files)
 
-                # 7. Apply ledger_diff
+                # 9. Apply ledger_diff
                 self._apply_ledger_diff(ledger_diff)
 
-                # 8. Apply canon_diff (if exists)
+                # 10. Apply canon_diff (if exists)
                 if canon_diff:
                     self._apply_canon_diff(canon_diff)
 
-                # 9. Write apply record
+                # 11. Write apply record
                 record = ApplyRecord(
                     arc_id=arc_id,
                     ledger_diff_hash=diff_hash,
@@ -170,14 +178,24 @@ class AtomicApplyManager:
                 record_path = self._root / "arcs" / arc_id / "reports" / "apply_record.json"
                 record_path.write_text(json.dumps(record.model_dump(), indent=2, ensure_ascii=False, default=str))
 
-                # 10. Mark consumed (persistent)
-                self._consumed.add(diff_hash)
-                self._save_consumed()
+                # 12. Mark consumed (persistent) — P1.5: rollback if consumed write fails
+                try:
+                    self._consumed.add(diff_hash)
+                    self._save_consumed()
+                except Exception:
+                    # Rollback apply_record if consumed write fails
+                    if record_path.exists():
+                        record_path.unlink()
+                    raise
 
                 return {"result": "success", "diff_hash": diff_hash}
 
             except Exception:
                 # Rollback: restore ledgers + canon/manuscript + canon/characters
+                # P1.4: Also delete new ledger files that didn't exist before
+                for f in (self._root / "ledgers").glob("*.json"):
+                    if f.name not in pre_existing_ledgers:
+                        f.unlink()
                 for f in ledgers_snap.glob("*.json"):
                     shutil.copy2(f, self._root / "ledgers" / f.name)
 

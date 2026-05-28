@@ -1,14 +1,17 @@
 import json
 from pathlib import Path
 from ..schemas.proposal import LedgerUpdateProposal
+from ..guards.path_safety import PathSafetyGuard
 
 
 class ArcWorkingStateManager:
     def __init__(self, project_root: Path):
         self._root = project_root
+        self._guard = PathSafetyGuard(project_root)
 
     def initialize(self, arc_id: str) -> dict:
         aws_path = self._root / "arcs" / arc_id / "arc_working_state.json"
+        self._guard.check_write_path(f"arcs/{arc_id}/arc_working_state.json", "system_script", artifact_type="arc_working_state")
         aws = {"schema_version": "1.0", "entries": []}
         aws_path.write_text(json.dumps(aws, indent=2, ensure_ascii=False))
         return aws
@@ -19,6 +22,7 @@ class ArcWorkingStateManager:
 
     def _save(self, arc_id: str, aws: dict):
         path = self._root / "arcs" / arc_id / "arc_working_state.json"
+        self._guard.check_write_path(f"arcs/{arc_id}/arc_working_state.json", "system_script", artifact_type="arc_working_state")
         path.write_text(json.dumps(aws, indent=2, ensure_ascii=False))
 
     def merge_proposal(self, arc_id: str, proposal: LedgerUpdateProposal, chapter: str) -> list[dict]:

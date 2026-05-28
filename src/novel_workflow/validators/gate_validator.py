@@ -2,7 +2,10 @@ from ..schemas.gate import GateRecord
 
 
 class GateValidator:
-    def validate(self, gate: GateRecord) -> bool:
+    def validate(self, gate: GateRecord, dry_run: bool = False) -> bool:
+        # Synthetic gates are only valid in dry-run mode
+        if gate.synthetic and not dry_run:
+            raise ValueError("SYNTHETIC_GATE_REJECTED: synthetic gates cannot be used in non-dry-run apply")
         if gate.decision == "approved":
             if not gate.author_input_evidence or not gate.author_input_evidence.strip():
                 raise ValueError("MISSING_GATE_EVIDENCE")

@@ -39,6 +39,18 @@ def _create_llm() -> LLM:
     return llm
 
 
+DRAFT_BUDGET = 2000
+REVIEW_BUDGET = 1000
+TOTAL_CONTROLLABLE_BUDGET = 10000
+
+
+def _apply_budget(text: str, limit: int) -> str:
+    """Truncate text to character budget with marker."""
+    if len(text) > limit:
+        return text[:limit] + "\n...(truncated)"
+    return text
+
+
 def _build_context(root: Path, arc_id: str, current_ch: int) -> str:
     """Build context from arc_working_state + canon + ledgers + previous chapters.
 
@@ -233,9 +245,11 @@ def _run_revision_loop(
             # Re-extract
             review_path = root / "arcs" / arc_id / "reviews" / f"{ch_id}_review.md"
             review_text = review_path.read_text(encoding="utf-8", errors="replace")
+            budgeted_draft_r = _apply_budget(draft_content, DRAFT_BUDGET)
+            budgeted_review_r = _apply_budget(review_text, REVIEW_BUDGET)
             extractor_prompt = (
                 f"Extract narrative facts from revised chapter {ch_id} as JSON.\n\n"
-                f"Draft:\n{draft_content}\n\nReview:\n{review_text}\n\n"
+                f"Draft:\n{budgeted_draft_r}\n\nReview:\n{budgeted_review_r}\n\n"
                 f"Output a JSON object with schema_version, claim, source_layer, "
                 f"source_artifact, evidence, confidence, target_ledger, operation, proposed_change.\n"
                 f"Return ONLY valid JSON."
@@ -389,10 +403,12 @@ def run_novel_flow(
 
         # Extractor
         review_content = review_path.read_text(encoding="utf-8", errors="replace")
+        budgeted_draft = _apply_budget(draft_content, DRAFT_BUDGET)
+        budgeted_review = _apply_budget(review_content, REVIEW_BUDGET)
         extractor_prompt = (
             f"Extract narrative facts from chapter {ch_id} as JSON.\n\n"
-            f"Draft:\n{draft_content}\n\n"
-            f"Review:\n{review_content}\n\n"
+            f"Draft:\n{budgeted_draft}\n\n"
+            f"Review:\n{budgeted_review}\n\n"
             f"Output a JSON object with this structure:\n"
             f'{{"schema_version": "1.0", "claim": "...", "source_layer": "draft", '
             f'"source_artifact": "arcs/{arc_id}/drafts/{ch_id}.md", '
@@ -507,7 +523,34 @@ def run_novel_flow(
             author_input_evidence="[DRY RUN] auto-approved for testing only",
             author_id="dry_run_system",
             source_artifacts=[],
+            synthetic=True,
         )
+        # Generate direction + arc_start synthetic gates
+        direction_gate = GateRecord(
+            gate_id=f"dir_{arc_id}",
+            gate_type="direction",
+            target_artifact="project",
+            decision="approved",
+            author_input_evidence="[DRY RUN] auto-generated",
+            author_id="dry_run_system",
+            source_artifacts=[],
+            synthetic=True,
+        )
+        arc_start_gate = GateRecord(
+            gate_id=f"as_{arc_id}",
+            gate_type="arc_start",
+            target_artifact=arc_id,
+            decision="approved",
+            author_input_evidence="[DRY RUN] auto-generated",
+            author_id="dry_run_system",
+            source_artifacts=[],
+            synthetic=True,
+        )
+        # Save all 3 gates
+        for g, name in [(direction_gate, "direction_gate"), (arc_start_gate, "arc_start_gate"), (gate, "arc_end_gate")]:
+            g_path = root / "arcs" / arc_id / "gates" / f"{name}.json"
+            guard.check_write_path(f"arcs/{arc_id}/gates/{name}.json", "system_script", artifact_type="gate_record")
+            g_path.write_text(json.dumps(g.model_dump(mode="json"), indent=2, ensure_ascii=False))
     else:
         gate = arc_end_gate
 
@@ -519,7 +562,7 @@ def run_novel_flow(
     # Atomic apply
     apply_mgr = AtomicApplyManager(root)
     draft_files = [f"{ch_id}.md" for ch_id in chapter_results]
-    apply_result = apply_mgr.apply(arc_id, gate, draft_files, ledger_diff, None)
+    apply_result = apply_mgr.apply(arc_id, gate, draft_files, ledger_diff, None, dry_run=dry_run)
     print(f"[NovelFlow] Apply result: {apply_result}")
 
     # 1.6 dashboard_report.md generation

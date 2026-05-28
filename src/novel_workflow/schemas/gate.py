@@ -12,6 +12,7 @@ class GateRecord(SchemaVersioned, Timestamped):
     source_artifacts: list[str]
     approval_level: str = "lightweight"  # "lightweight" | "strict"
     system_script_version: str = "0.1.0"
+    synthetic: bool = False
 
     @field_validator("author_input_evidence")
     @classmethod
