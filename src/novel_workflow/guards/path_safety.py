@@ -65,7 +65,9 @@ class PathSafetyGuard:
         resolved = (self._root / pure).resolve()
 
         # Reject symlink escape
-        if not str(resolved).startswith(str(self._root)):
+        try:
+            resolved.relative_to(self._root)
+        except ValueError:
             raise PathSafetyError("SYMLINK_ESCAPE_REJECTED", f"Path escapes workspace: {path}")
 
         # Role-based positive allowlist
