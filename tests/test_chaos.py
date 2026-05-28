@@ -116,7 +116,9 @@ def test_case4_duplicate_apply_rejected(project_root: Path):
         arc_id="arc_001",
         operations=[{"type": "append", "target_ledger": "timeline",
                      "operation": "append_event",
-                     "data": {"event_id": "e1", "summary": "A arrives"}}],
+                     "data": {"event_id": "e1", "summary": "A arrives"},
+                     "source_artifact": "arcs/arc_001/drafts/ch_001.md",
+                     "source_layer": "draft"}],
     )
     mgr = AtomicApplyManager(project_root)
     # First apply succeeds
@@ -143,7 +145,9 @@ def test_case4b_consumed_persists_across_manager_instances(project_root: Path):
         arc_id="arc_001",
         operations=[{"type": "append", "target_ledger": "timeline",
                      "operation": "append_event",
-                     "data": {"event_id": "e1", "summary": "A arrives"}}],
+                     "data": {"event_id": "e1", "summary": "A arrives"},
+                     "source_artifact": "arcs/arc_001/drafts/ch_001.md",
+                     "source_layer": "draft"}],
     )
     # First instance applies
     mgr1 = AtomicApplyManager(project_root)

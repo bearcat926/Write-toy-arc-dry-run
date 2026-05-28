@@ -90,7 +90,9 @@ def test_atomic_apply_rejects_synthetic_gate_in_non_dryrun(project_root: Path):
         arc_id="arc_001",
         operations=[{"type": "append", "target_ledger": "timeline",
                      "operation": "append_event",
-                     "data": {"event_id": "e1", "summary": "A arrives"}}],
+                     "data": {"event_id": "e1", "summary": "A arrives"},
+                     "source_artifact": "arcs/arc_001/drafts/ch_001.md",
+                     "source_layer": "draft"}],
     )
     mgr = AtomicApplyManager(project_root)
     with pytest.raises(ValueError, match="SYNTHETIC_GATE_REJECTED"):
@@ -112,7 +114,9 @@ def test_atomic_apply_accepts_synthetic_gate_in_dryrun(project_root: Path):
         arc_id="arc_001",
         operations=[{"type": "append", "target_ledger": "timeline",
                      "operation": "append_event",
-                     "data": {"event_id": "e1", "summary": "A arrives"}}],
+                     "data": {"event_id": "e1", "summary": "A arrives"},
+                     "source_artifact": "arcs/arc_001/drafts/ch_001.md",
+                     "source_layer": "draft"}],
     )
     mgr = AtomicApplyManager(project_root)
     result = mgr.apply("arc_001", gate, ["ch_001.md"], ledger_diff, None, dry_run=True)

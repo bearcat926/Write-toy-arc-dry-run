@@ -22,7 +22,9 @@ def _make_diff(schema_version="1.0"):
         arc_id="arc_001",
         operations=[{"type": "append", "target_ledger": "timeline",
                      "operation": "append_event",
-                     "data": {"event_id": "e1", "summary": "A arrives"}}],
+                     "data": {"event_id": "e1", "summary": "A arrives"},
+                     "source_artifact": "arcs/arc_001/drafts/ch_001.md",
+                     "source_layer": "draft"}],
     )
 
 
@@ -58,7 +60,9 @@ def test_rollback_deletes_new_ledger_files(project_root: Path):
         operations=[
             {"type": "append", "target_ledger": "timeline",
              "operation": "append_event",
-             "data": {"event_id": "e1", "summary": "A arrives"}},
+             "data": {"event_id": "e1", "summary": "A arrives"},
+             "source_artifact": "arcs/arc_001/drafts/ch_001.md",
+             "source_layer": "draft"},
         ],
     )
     mgr = AtomicApplyManager(project_root)

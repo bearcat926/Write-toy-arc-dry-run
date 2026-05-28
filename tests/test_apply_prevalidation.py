@@ -28,6 +28,8 @@ def test_invalid_foreshadow_transition_rejected(project_root: Path):
             "target_ledger": "foreshadowing",
             "operation": "pay_off_foreshadow",
             "data": {"foreshadow_id": "fs1", "status_from": "paid_off", "status_to": "introduced"},
+            "source_artifact": "arcs/arc_001/drafts/ch_001.md",
+            "source_layer": "draft",
         }],
     )
     mgr = AtomicApplyManager(project_root)

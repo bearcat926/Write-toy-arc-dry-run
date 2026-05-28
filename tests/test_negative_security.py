@@ -119,7 +119,9 @@ def test_apply_midway_failure_rollback(project_root: Path):
         arc_id="arc_001",
         operations=[{"type": "append", "target_ledger": "timeline",
                      "operation": "append_event",
-                     "data": {"event_id": "e1", "summary": "test"}}],
+                     "data": {"event_id": "e1", "summary": "test"},
+                     "source_artifact": "arcs/arc_001/drafts/ch_001.md",
+                     "source_layer": "draft"}],
     )
     gate = GateRecord(
         gate_id="ae_001", gate_type="arc_end", target_artifact="arc_001",
@@ -153,7 +155,9 @@ def test_stale_gate_reused_rejected(project_root: Path):
         arc_id="arc_001",
         operations=[{"type": "append", "target_ledger": "timeline",
                      "operation": "append_event",
-                     "data": {"event_id": "e1", "summary": "test"}}],
+                     "data": {"event_id": "e1", "summary": "test"},
+                     "source_artifact": "arcs/arc_001/drafts/ch_001.md",
+                     "source_layer": "draft"}],
     )
     gate = GateRecord(
         gate_id="ae_001", gate_type="arc_end", target_artifact="arc_001",
@@ -181,7 +185,9 @@ def test_proposal_disguised_as_diff_rejected(project_root: Path):
         arc_id="arc_001",
         operations=[{"type": "append", "target_ledger": "invalid_ledger",
                      "operation": "append_event",
-                     "data": {"event_id": "e1", "summary": "spoofed"}}],
+                     "data": {"event_id": "e1", "summary": "spoofed"},
+                     "source_artifact": "arcs/arc_001/drafts/ch_001.md",
+                     "source_layer": "draft"}],
     )
     gate = GateRecord(
         gate_id="ae_001", gate_type="arc_end", target_artifact="arc_001",
