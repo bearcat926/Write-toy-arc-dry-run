@@ -27,22 +27,31 @@ def resolve_under_root(root: Path, rel_path: str) -> Path:
     root_resolved = root.resolve()
     target = (root / PurePosixPath(rel_path)).resolve()
 
-    if not str(target).startswith(str(root_resolved)):
+    try:
+        target.relative_to(root_resolved)
+    except ValueError:
         raise ValueError(PATH_ESCAPE_REJECTED)
 
     return target
 
 
-def assert_safe_derived_path(root: Path, rel_path: str) -> None:
-    """Assert that a derived path is safe: under workspace/, not a symlink."""
-    resolved = resolve_under_root(root, rel_path)
+def assert_no_symlink_in_path(root: Path, rel_path: str) -> None:
+    """Walk each path component and reject if any intermediate is a symlink."""
+    root_resolved = root.resolve()
+    parts = PurePosixPath(rel_path).parts
+    current = root_resolved
+    for part in parts:
+        current = current / part
+        if current.is_symlink():
+            raise ValueError(SYMLINK_DERIVED_PATH_REJECTED)
 
+
+def assert_safe_derived_path(root: Path, rel_path: str) -> None:
+    """Assert that a derived path is safe: under workspace/, no symlinks."""
     if not rel_path.startswith("workspace/"):
         raise ValueError(DERIVED_PATH_OUTSIDE_WORKSPACE)
-
-    # Phase 2 MVP: forbid symlinked derived artifacts entirely
-    if resolved.exists() and resolved.is_symlink():
-        raise ValueError(SYMLINK_DERIVED_PATH_REJECTED)
+    assert_no_symlink_in_path(root, rel_path)
+    resolve_under_root(root, rel_path)
 
 
 def assert_not_derived_source(source_artifact: str) -> None:
