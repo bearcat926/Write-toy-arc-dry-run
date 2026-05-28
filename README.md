@@ -62,7 +62,7 @@ python run_llm_dry_run.py
 
 ```bash
 pytest tests/ -v
-# 73 tests passing, covering:
+# 312+ passed, 5 skipped (Windows symlink tests), covering:
 # - DoD #1: Agent write rejection (path safety)
 # - DoD #2: Gate evidence enforcement
 # - DoD #3: Proposal cannot directly apply
@@ -70,6 +70,7 @@ pytest tests/ -v
 # - DoD #7: Atomic apply + rollback + idempotent
 # - DoD #8: Schema versioning
 # - DoD #10: Path traversal / symlink escape
+# - Phase 2: Provenance enforcement, derived path hardening, CI auditability
 ```
 
 ## MVP vs Production Roadmap
