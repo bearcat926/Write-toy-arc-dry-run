@@ -126,3 +126,22 @@ def test_system_script_known_types_succeed_unknown_rejected(guard: PathSafetyGua
 
     with pytest.raises(PathSafetyError, match="UNKNOWN_ARTIFACT_TYPE"):
         guard.check_write_path("workspace/some_file.txt", "system_script", artifact_type="bogus_type")
+
+
+def test_intermediate_symlink_rejected_by_guard(project_root: Path):
+    """PathSafetyGuard must reject paths with symlinked intermediate directories."""
+    import os
+    real_dir = project_root / "real_arcs"
+    real_dir.mkdir()
+    (real_dir / "arc_001").mkdir(parents=True)
+    (real_dir / "arc_001" / "drafts").mkdir()
+
+    arcs_link = project_root / "arcs"
+    try:
+        os.symlink(str(real_dir), str(arcs_link))
+    except OSError:
+        pytest.skip("Symlink creation not supported (requires admin on Windows)")
+
+    guard = PathSafetyGuard(project_root)
+    with pytest.raises(PathSafetyError, match="SYMLINK_ESCAPE_REJECTED"):
+        guard.check_write_path("arcs/arc_001/drafts/ch_001.md", "agent")

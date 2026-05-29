@@ -1,6 +1,7 @@
 import re as _re
 from pathlib import Path, PurePosixPath
 from ..config import ROLE_ALLOWLIST
+from ..validators.derived_artifact_policy import assert_no_symlink_in_path
 
 
 class PathSafetyError(Exception):
@@ -64,7 +65,13 @@ class PathSafetyGuard:
 
         resolved = (self._root / pure).resolve()
 
-        # Reject symlink escape
+        # Reject symlink in any intermediate directory
+        try:
+            assert_no_symlink_in_path(self._root, path)
+        except ValueError:
+            raise PathSafetyError("SYMLINK_ESCAPE_REJECTED", f"Path contains symlink: {path}")
+
+        # Reject path escape
         try:
             resolved.relative_to(self._root)
         except ValueError:
