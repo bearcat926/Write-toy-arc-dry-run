@@ -67,5 +67,5 @@ def test_unknown_phase2_artifact_type_rejected(project_root: Path):
     with pytest.raises(PathSafetyError, match="UNKNOWN_ARTIFACT_TYPE"):
         guard.check_write_path(
             "workspace/test.json", "system_script",
-            artifact_type="narrative_graph_index",
+            artifact_type="truly_unknown_type_xyz",
         )

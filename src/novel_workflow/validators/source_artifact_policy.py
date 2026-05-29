@@ -35,7 +35,6 @@ DENY_SOURCE_PREFIXES = (
     "workspace/retrieval_traces/",
     "workspace/reports/",
     "workspace/phase2/",
-    "workspace/summaries/",
     "workspace/narrative_graph_index",
     "workspace/foreshadow_lifecycle_index",
     "workspace/character_state/",
