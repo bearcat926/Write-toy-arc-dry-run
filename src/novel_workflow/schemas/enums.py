@@ -63,6 +63,10 @@ class RetrievalTrustLevel(str, Enum):
     LEDGER_FACT = "ledger_fact"
     WORKING_STATE = "working_state"
     DERIVED_SUMMARY = "derived_summary"
+    DERIVED_GRAPH = "derived_graph"
+    DERIVED_LIFECYCLE = "derived_lifecycle"
+    DERIVED_DRIFT = "derived_drift"
+    DERIVED_ARC_PLAN = "derived_arc_plan"
     RUNTIME_CONTEXT = "runtime_context"
 
 

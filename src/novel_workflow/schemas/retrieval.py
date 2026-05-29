@@ -15,7 +15,11 @@ TRUST_LEVEL_PRIORITY: dict[RetrievalTrustLevel, int] = {
     RetrievalTrustLevel.CANONICAL: 100,
     RetrievalTrustLevel.LEDGER_FACT: 90,
     RetrievalTrustLevel.WORKING_STATE: 80,
-    RetrievalTrustLevel.DERIVED_SUMMARY: 50,
+    RetrievalTrustLevel.DERIVED_SUMMARY: 55,
+    RetrievalTrustLevel.DERIVED_GRAPH: 50,
+    RetrievalTrustLevel.DERIVED_LIFECYCLE: 45,
+    RetrievalTrustLevel.DERIVED_DRIFT: 35,
+    RetrievalTrustLevel.DERIVED_ARC_PLAN: 30,
     RetrievalTrustLevel.RUNTIME_CONTEXT: 10,
 }
 
@@ -33,6 +37,10 @@ TRUST_LEVEL_SOURCE_LAYER_MAP: dict[RetrievalTrustLevel, SourceLayer | None] = {
     RetrievalTrustLevel.LEDGER_FACT: SourceLayer.CANON,
     RetrievalTrustLevel.WORKING_STATE: SourceLayer.ARC_WORKING_STATE,
     RetrievalTrustLevel.DERIVED_SUMMARY: SourceLayer.DRAFT,
+    RetrievalTrustLevel.DERIVED_GRAPH: None,
+    RetrievalTrustLevel.DERIVED_LIFECYCLE: None,
+    RetrievalTrustLevel.DERIVED_DRIFT: None,
+    RetrievalTrustLevel.DERIVED_ARC_PLAN: None,
     RetrievalTrustLevel.RUNTIME_CONTEXT: None,
 }
 
@@ -55,6 +63,7 @@ class RetrievedContextItem(SchemaVersioned):
     trust_level: RetrievalTrustLevel
     relevance_reason: str = ""
     priority: int = 0
+    selection_reason: str = ""
 
     @field_validator("trust_level")
     @classmethod
@@ -86,10 +95,10 @@ class RetrievedContextItem(SchemaVersioned):
             if not source_artifact_hash:
                 raise ValueError(f"trust_level={v.value} requires source_artifact_hash")
 
-        # derived_summary must have is_derived=True
-        if v == RetrievalTrustLevel.DERIVED_SUMMARY:
+        # All DERIVED_* must have is_derived=True
+        if v.value.startswith("derived_"):
             if not is_derived:
-                raise ValueError("derived_summary must have is_derived=True")
+                raise ValueError(f"trust_level={v.value} must have is_derived=True")
 
         # canonical/ledger_fact/working_state must NOT be derived
         if v in {RetrievalTrustLevel.CANONICAL, RetrievalTrustLevel.LEDGER_FACT,
@@ -120,6 +129,19 @@ class RetrievalTrace(SchemaVersioned, Timestamped):
     agent_role: str = ""
     attempt_id: str = ""
     derived: bool = True
+    generation_id: str = ""
+    context_mode: ContextBuilderMode = ContextBuilderMode.LEGACY
+    trace_write_status: Literal["written", "failed"] = "written"
+    trace_write_error: str | None = None
+    ranking_features: dict = {}
+
+    @field_validator("trace_write_status")
+    @classmethod
+    def validate_trace_write(cls, v: str, info) -> str:
+        error = info.data.get("trace_write_error")
+        if v == "failed" and not error:
+            raise ValueError("trace_write_status='failed' requires trace_write_error")
+        return v
 
 
 def retrieval_sort_key(item: RetrievedContextItem) -> tuple:
