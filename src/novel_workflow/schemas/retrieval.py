@@ -131,8 +131,8 @@ class RetrievalTrace(SchemaVersioned, Timestamped):
     derived: bool = True
     generation_id: str = ""
     context_mode: ContextBuilderMode = ContextBuilderMode.LEGACY
-    trace_write_status: Literal["written", "failed"] = "written"
     trace_write_error: str | None = None
+    trace_write_status: Literal["written", "failed"] = "written"
     ranking_features: dict = {}
 
     @field_validator("trace_write_status")
