@@ -39,6 +39,19 @@ class ArtifactType(str, Enum):
     ARC_SUMMARY = "arc_summary"
     RETRIEVAL_TRACE = "retrieval_trace"
     PHASE2_META = "phase2_meta"
+    # Phase 2 future (Milestone 2-5)
+    NARRATIVE_GRAPH_INDEX = "narrative_graph_index"
+    FORESHADOW_LIFECYCLE_INDEX = "foreshadow_lifecycle_index"
+    GRAPH_HEALTH_REPORT = "graph_health_report"
+    FORESHADOW_LIFECYCLE_REPORT = "foreshadow_lifecycle_report"
+    CHARACTER_STATE_SNAPSHOT = "character_state_snapshot"
+    CHARACTER_DRIFT_REPORT = "character_drift_report"
+    DRIFT_HEALTH_REPORT = "drift_health_report"
+    STRUCTURED_AUDIT_REPORT = "structured_audit_report"
+    ARC_PLAN = "arc_plan"
+    CHAPTER_BEAT_PLAN = "chapter_beat_plan"
+    ARC_HEALTH_REPORT = "arc_health_report"
+    ARC_PLANNING_TRACE = "arc_planning_trace"
 
 
 class ProtocolVersion(str, Enum):

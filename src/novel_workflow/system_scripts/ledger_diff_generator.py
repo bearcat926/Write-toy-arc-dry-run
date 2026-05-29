@@ -1,4 +1,5 @@
 from ..config import FORESHADOW_TRANSITIONS
+from ..validators.source_artifact_policy import validate_source_artifact
 
 
 class LedgerDiffGenerator:
@@ -7,6 +8,15 @@ class LedgerDiffGenerator:
         foreshadow_states: dict[str, str] = {}
 
         for p in proposals:
+            # Validate source provenance
+            source_layer = p.get("source_layer", "")
+            source_artifact = p.get("source_artifact", "")
+            if not source_layer or not source_artifact:
+                raise ValueError("MISSING_PROVENANCE: proposal lacks source_layer/source_artifact")
+            result = validate_source_artifact(source_layer, source_artifact)
+            if not result.is_valid:
+                raise ValueError(f"{result.error_code}: {source_artifact}")
+
             ledger = p["target_ledger"]
             op = p["operation"]
             change = p["proposed_change"]
@@ -17,6 +27,10 @@ class LedgerDiffGenerator:
                     "target_ledger": ledger,
                     "operation": op,
                     "data": {**change, "corrects_event_id": change.get("corrects_event_id", change.get("event_id", ""))},
+                    "source_layer": source_layer,
+                    "source_artifact": source_artifact,
+                    "source_artifact_hash": p.get("source_artifact_hash", ""),
+                    "is_derived": False,
                 })
                 continue
 
@@ -26,6 +40,10 @@ class LedgerDiffGenerator:
                     "target_ledger": ledger,
                     "operation": op,
                     "data": {**change, "corrects_previous": True},
+                    "source_layer": source_layer,
+                    "source_artifact": source_artifact,
+                    "source_artifact_hash": p.get("source_artifact_hash", ""),
+                    "is_derived": False,
                 })
                 continue
 
@@ -49,6 +67,10 @@ class LedgerDiffGenerator:
                 "target_ledger": ledger,
                 "operation": op,
                 "data": change,
+                "source_layer": source_layer,
+                "source_artifact": source_artifact,
+                "source_artifact_hash": p.get("source_artifact_hash", ""),
+                "is_derived": False,
             })
 
         return {"schema_version": "1.0", "operations": operations}

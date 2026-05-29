@@ -37,7 +37,23 @@ def test_artifact_type_phase1_preserved():
 
 def test_artifact_type_invalid():
     with pytest.raises(ValueError):
-        ArtifactType("narrative_graph_index")  # not in enum yet
+        ArtifactType("truly_nonexistent_type_xyz")  # not in enum
+
+
+def test_artifact_type_phase2_future_values():
+    """Verify all Phase 2 future artifact types are registered."""
+    assert ArtifactType.NARRATIVE_GRAPH_INDEX.value == "narrative_graph_index"
+    assert ArtifactType.FORESHADOW_LIFECYCLE_INDEX.value == "foreshadow_lifecycle_index"
+    assert ArtifactType.GRAPH_HEALTH_REPORT.value == "graph_health_report"
+    assert ArtifactType.FORESHADOW_LIFECYCLE_REPORT.value == "foreshadow_lifecycle_report"
+    assert ArtifactType.CHARACTER_STATE_SNAPSHOT.value == "character_state_snapshot"
+    assert ArtifactType.CHARACTER_DRIFT_REPORT.value == "character_drift_report"
+    assert ArtifactType.DRIFT_HEALTH_REPORT.value == "drift_health_report"
+    assert ArtifactType.STRUCTURED_AUDIT_REPORT.value == "structured_audit_report"
+    assert ArtifactType.ARC_PLAN.value == "arc_plan"
+    assert ArtifactType.CHAPTER_BEAT_PLAN.value == "chapter_beat_plan"
+    assert ArtifactType.ARC_HEALTH_REPORT.value == "arc_health_report"
+    assert ArtifactType.ARC_PLANNING_TRACE.value == "arc_planning_trace"
 
 
 def test_protocol_version():
