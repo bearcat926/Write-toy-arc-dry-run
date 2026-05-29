@@ -16,12 +16,12 @@
 
 ```bash
 pytest tests/ -v
-# 312+ passed, 5 skipped (Windows symlink tests)
+# 312+ passed, 7 skipped (Windows symlink tests)
 ```
 
 ### Skipped Tests
 
-5 tests use `os.symlink()` which requires admin privileges on Windows.
+7 tests use `os.symlink()` which requires admin privileges on Windows.
 These tests run on CI (ubuntu-latest) where symlink creation is unprivileged.
 
 ## Changes Made
@@ -46,4 +46,4 @@ These tests run on CI (ubuntu-latest) where symlink creation is unprivileged.
 - [x] Symlink at any path component rejected
 - [x] Path traversal via ../ rejected
 - [x] CI workflow passes on ubuntu-latest
-- [x] All 312+ tests pass, 5 skipped (Windows symlinks)
+- [x] All 312+ tests pass, 7 skipped (Windows symlinks)
