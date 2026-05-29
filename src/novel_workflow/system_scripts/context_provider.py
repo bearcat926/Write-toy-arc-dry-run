@@ -40,6 +40,18 @@ class ContextProvider:
         trace = self._make_shadow_trace("extractor", arc_id, current_ch)
         return context, trace
 
+    @staticmethod
+    def write_trace(root: Path, arc_id: str, chapter_id: str, trace: RetrievalTrace) -> None:
+        """Write retrieval trace to JSONL file. Non-fatal on failure."""
+        try:
+            traces_dir = root / "workspace" / "retrieval_traces"
+            traces_dir.mkdir(parents=True, exist_ok=True)
+            trace_file = traces_dir / f"{chapter_id}.jsonl"
+            with open(trace_file, "a", encoding="utf-8") as f:
+                f.write(trace.model_dump_json() + "\n")
+        except Exception as e:
+            print(f"[ContextProvider] WARNING: failed to write trace for {chapter_id}: {e}")
+
     def _make_shadow_trace(self, agent_role: str, arc_id: str, current_ch: int) -> RetrievalTrace:
         request = RetrievalRequest(
             arc_id=arc_id,
