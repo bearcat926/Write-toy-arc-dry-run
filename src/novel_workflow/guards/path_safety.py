@@ -41,6 +41,19 @@ _SYSTEM_SCRIPT_ALLOWED = {
     "arc_summary": _re.compile(r"^workspace/summaries/arc_[^/]+_summary\.json$"),
     "retrieval_trace": _re.compile(r"^workspace/retrieval_traces/ch_\d{3}\.jsonl$"),
     "phase2_meta": _re.compile(r"^workspace/phase2/meta\.json$"),
+    # Phase 2 future (Milestone 2-5)
+    "narrative_graph_index": _re.compile(r"^workspace/narrative_graph_index\.json$"),
+    "foreshadow_lifecycle_index": _re.compile(r"^workspace/foreshadow_lifecycle_index\.json$"),
+    "graph_health_report": _re.compile(r"^workspace/reports/graph_health_report\.md$"),
+    "foreshadow_lifecycle_report": _re.compile(r"^workspace/reports/foreshadow_lifecycle_report\.md$"),
+    "character_state_snapshot": _re.compile(r"^workspace/character_state/[^/]+\.json$"),
+    "character_drift_report": _re.compile(r"^workspace/reports/character_drift_report\.md$"),
+    "drift_health_report": _re.compile(r"^workspace/reports/drift_health_report\.md$"),
+    "structured_audit_report": _re.compile(r"^workspace/reports/structured_audit_report\.md$"),
+    "arc_plan": _re.compile(r"^workspace/arc_plan/arc_[^/]+_arc_plan\.json$"),
+    "chapter_beat_plan": _re.compile(r"^workspace/arc_plan/arc_[^/]+_ch_\d{3}_beat_plan\.json$"),
+    "arc_health_report": _re.compile(r"^workspace/reports/arc_health_report\.md$"),
+    "arc_planning_trace": _re.compile(r"^workspace/retrieval_traces/arc_[^/]+_planning\.jsonl$"),
 }
 
 

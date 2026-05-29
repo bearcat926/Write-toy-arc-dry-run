@@ -35,6 +35,11 @@ DENY_SOURCE_PREFIXES = (
     "workspace/retrieval_traces/",
     "workspace/reports/",
     "workspace/phase2/",
+    "workspace/summaries/",
+    "workspace/narrative_graph_index",
+    "workspace/foreshadow_lifecycle_index",
+    "workspace/character_state/",
+    "workspace/arc_plan/",
 )
 
 DERIVED_SOURCE_PREFIXES = (
@@ -42,6 +47,10 @@ DERIVED_SOURCE_PREFIXES = (
     "workspace/reports/",
     "workspace/retrieval_traces/",
     "workspace/phase2/",
+    "workspace/narrative_graph_index",
+    "workspace/foreshadow_lifecycle_index",
+    "workspace/character_state/",
+    "workspace/arc_plan/",
 )
 
 

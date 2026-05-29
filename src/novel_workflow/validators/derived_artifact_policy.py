@@ -14,6 +14,11 @@ DERIVED_PATH_PREFIXES = (
     "workspace/reports/",
     "workspace/retrieval_traces/",
     "workspace/phase2/",
+    # Phase 2 future: root-level workspace derived artifacts
+    "workspace/narrative_graph_index",
+    "workspace/foreshadow_lifecycle_index",
+    "workspace/character_state/",
+    "workspace/arc_plan/",
 )
 
 
