@@ -25,6 +25,7 @@ from ..metrics.collector import MetricsCollector, ChapterMetrics
 from ..guards.path_safety import PathSafetyGuard
 from .config import LLM_MODEL, LLM_BASE_URL, LLM_API_KEY
 from .tools import safe_write_draft, safe_write_review, safe_write_proposal
+from ..system_scripts.context_provider import ContextProvider
 
 
 def _create_llm() -> LLM:
@@ -168,6 +169,7 @@ def _run_revision_loop(
     arc_id: str,
     chapter_ids: list[str],
     max_revisions: int = 2,
+    provider: ContextProvider | None = None,
 ) -> None:
     """
     Revision loop for production mode.
@@ -220,7 +222,12 @@ def _run_revision_loop(
 
         for ch_id in current_rejected:
             ch_num = int(ch_id.split("_")[1])
-            context = _build_context(root, arc_id, ch_num)
+            if provider:
+                context, trace = provider.build_writer_context(arc_id, ch_num)
+                if trace:
+                    ContextProvider.write_trace(root, arc_id, ch_id, trace)
+            else:
+                context = _build_context(root, arc_id, ch_num)
 
             # Rewrite
             writer_prompt = (
@@ -373,12 +380,15 @@ def run_novel_flow(
     metrics_collector = MetricsCollector(root)
     effect_checker = ChapterEffectChecker()
     chapter_start = time.time()
+    provider = ContextProvider(root)
 
     for ch_num in range(start_ch, chapters_total + 1):
         ch_id = f"ch_{ch_num:03d}"
         print(f"\n[NovelFlow] === Chapter {ch_id} ===")
 
-        context = _build_context(root, arc_id, ch_num)
+        context, trace = provider.build_writer_context(arc_id, ch_num)
+        if trace:
+            ContextProvider.write_trace(root, arc_id, ch_id, trace)
 
         # Writer
         writer_prompt = f"Write chapter {ch_id} of the story.\n\nStory context:\n{context}\n\nWrite ONLY the chapter content in markdown format."
@@ -595,7 +605,7 @@ def run_novel_flow(
 
     # Revision loop (production mode stub)
     if not dry_run and gate.decision == "rejected":
-        _run_revision_loop(root, arc_id, chapter_results, max_revisions=2)
+        _run_revision_loop(root, arc_id, chapter_results, max_revisions=2, provider=provider)
 
     return {
         "chapters": chapter_results,
