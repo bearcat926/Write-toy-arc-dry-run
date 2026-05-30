@@ -175,3 +175,11 @@ class NarrativeGraphBuilder:
         manifest.save()
 
         return graph
+
+    def write_index(self, arc_id: str | None = None) -> NarrativeGraphIndex:
+        """Build and write graph index to disk."""
+        graph = self.build(arc_id)
+        output_path = self._root / "workspace" / "narrative_graph_index.json"
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        output_path.write_text(graph.model_dump_json(indent=2), encoding="utf-8")
+        return graph

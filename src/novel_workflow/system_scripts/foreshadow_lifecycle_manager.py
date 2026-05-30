@@ -125,3 +125,11 @@ class ForeshadowLifecycleManager:
         manifest.save()
 
         return index, invalid_transitions
+
+    def write_index(self, arc_id: str) -> tuple:
+        """Build and write lifecycle index to disk."""
+        index, transitions = self.build(arc_id)
+        output_path = self._root / "workspace" / "foreshadow_lifecycle_index.json"
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        output_path.write_text(index.model_dump_json(indent=2), encoding="utf-8")
+        return index, transitions
