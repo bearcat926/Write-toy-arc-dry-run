@@ -2,26 +2,15 @@
 
 # Phase 2 Test Baseline
 
-**Base Commit:** 91f1759
+**Base Commit:** fa4fed5
 **Python:** 3.13
 
 ## Summary
 
 | Metric | Count |
 |--------|-------|
-| Total | 453 |
-| Passed | 445 |
+| Total | 551 |
+| Passed | 551 |
 | Failed | 0 |
 | Errors | 0 |
-| Skipped | 8 |
-
-## Skipped Tests
-
-- `test_arc_state_guard::test_arc_state_manager_symlink_escape_rejected` — Symlink creation not supported (requires admin on Windows)
-- `test_derived_artifact_policy::test_symlink_derived_rejected` — Symlink creation not supported (requires admin on Windows)
-- `test_derived_artifact_policy::test_symlink_to_outside_rejected` — Symlink creation not supported (requires admin on Windows)
-- `test_derived_path_hardening::test_parent_symlink_rejected` — Symlink creation not supported (requires admin on Windows)
-- `test_derived_path_hardening::test_intermediate_dir_symlink_rejected` — Symlink creation not supported (requires admin on Windows)
-- `test_negative_security::test_symlink_escape_rejected` — Symlink creation not supported (requires admin on Windows)
-- `test_negative_security::test_toctou_symlink_race_rejected` — Symlink creation not supported (requires admin on Windows)
-- `test_path_safety::test_intermediate_symlink_rejected_by_guard` — Symlink creation not supported (requires admin on Windows)
+| Skipped | 0 |
