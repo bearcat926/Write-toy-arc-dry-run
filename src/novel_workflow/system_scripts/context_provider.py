@@ -7,6 +7,13 @@ from ..schemas.enums import ContextBuilderMode
 
 ACTIVE_MODES = {"retrieval_active", "arc_active"}
 
+# Budget per role for active mode
+_ROLE_BUDGETS = {
+    "writer": 25000,
+    "auditor": 30000,
+    "extractor": 12000,
+}
+
 
 def _get_build_context():
     """Lazy import to avoid circular dependency with flow.py."""
@@ -20,7 +27,7 @@ class ContextProvider:
     Modes:
     - legacy: calls _build_context(), returns (context, None)
     - retrieval_shadow: calls _build_context(), returns (context, RetrievalTrace)
-    - retrieval_active/arc_active: reserved for future use
+    - retrieval_active: uses RetrievalContextBuilder with budget control
     """
 
     def __init__(self, root: Path, mode: str | None = None):
@@ -50,13 +57,18 @@ class ContextProvider:
         return FAILURE_ISOLATION_DEFAULTS.get(self._mode, "best_effort")
 
     def build_writer_context(self, arc_id: str, current_ch: int) -> tuple[str, RetrievalTrace | None]:
+        if self._mode == "retrieval_active":
+            return self._build_active_context("writer", arc_id, current_ch)
         context = _get_build_context()(self._root, arc_id, current_ch)
         if self._mode == "legacy":
             return context, None
+        # retrieval_shadow
         trace = self._make_shadow_trace("writer", arc_id, current_ch)
         return context, trace
 
     def build_auditor_context(self, arc_id: str, current_ch: int) -> tuple[str, RetrievalTrace | None]:
+        if self._mode == "retrieval_active":
+            return self._build_active_context("auditor", arc_id, current_ch)
         context = _get_build_context()(self._root, arc_id, current_ch)
         if self._mode == "legacy":
             return context, None
@@ -64,10 +76,26 @@ class ContextProvider:
         return context, trace
 
     def build_extractor_context(self, arc_id: str, current_ch: int) -> tuple[str, RetrievalTrace | None]:
+        if self._mode == "retrieval_active":
+            return self._build_active_context("extractor", arc_id, current_ch)
         context = _get_build_context()(self._root, arc_id, current_ch)
         if self._mode == "legacy":
             return context, None
         trace = self._make_shadow_trace("extractor", arc_id, current_ch)
+        return context, trace
+
+    def _build_active_context(self, agent_role: str, arc_id: str, current_ch: int) -> tuple[str, RetrievalTrace]:
+        """Build context using RetrievalContextBuilder for active mode."""
+        from .retrieval_context_builder import RetrievalContextBuilder
+        builder = RetrievalContextBuilder(self._root)
+        budget = _ROLE_BUDGETS.get(agent_role, 12000)
+        request = RetrievalRequest(
+            arc_id=arc_id,
+            chapter_id=f"ch_{current_ch:03d}",
+            agent_role=agent_role,
+            max_character_budget=budget,
+        )
+        context, trace = builder.build(request)
         return context, trace
 
     @staticmethod
