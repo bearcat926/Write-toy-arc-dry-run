@@ -1,0 +1,5 @@
+{
+  "expected_positive": true,
+  "expected_drift_type": "voice_drift",
+  "expected_severity": "soft_warning"
+}

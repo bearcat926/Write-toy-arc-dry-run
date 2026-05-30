@@ -1,0 +1,5 @@
+{
+  "expected_positive": true,
+  "expected_drift_type": "ooc_behavior",
+  "expected_severity": "creative_review"
+}

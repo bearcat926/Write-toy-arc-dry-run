@@ -1,0 +1,5 @@
+{
+  "expected_positive": true,
+  "expected_drift_type": "knowledge_boundary_violation",
+  "expected_severity": "hard_pause"
+}

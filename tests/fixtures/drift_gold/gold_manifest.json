@@ -1,0 +1,42 @@
+{
+  "schema_version": "1.0",
+  "dataset_version": 1,
+  "case_count": 8,
+  "positive_cases": 5,
+  "negative_cases": 3,
+  "cases": [
+    {
+      "case_id": "case_001",
+      "character_name": "Viktor"
+    },
+    {
+      "case_id": "case_002",
+      "character_name": "Elena"
+    },
+    {
+      "case_id": "case_003",
+      "character_name": "Marcus"
+    },
+    {
+      "case_id": "case_004",
+      "character_name": "Aria"
+    },
+    {
+      "case_id": "case_005",
+      "character_name": "Thorne"
+    },
+    {
+      "case_id": "case_006",
+      "character_name": "Lena"
+    },
+    {
+      "case_id": "case_007",
+      "character_name": "Kai"
+    },
+    {
+      "case_id": "case_008",
+      "character_name": "Sophia"
+    }
+  ],
+  "generated_by": "manual"
+}
