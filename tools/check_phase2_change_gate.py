@@ -41,10 +41,38 @@ def check_change1(project_root: Path) -> list[str]:
     return failures
 
 
+def check_change2(project_root: Path) -> list[str]:
+    """Check Change 2 entry gates."""
+    failures = []
+    # Change 1 gates must pass first
+    failures.extend([f"[change1] {f}" for f in check_change1(project_root)])
+    # Manifest schema exists
+    manifest_schema = project_root / "src" / "novel_workflow" / "schemas" / "manifest.py"
+    if not manifest_schema.exists():
+        failures.append("schemas/manifest.py missing")
+    # Manifest schema test exists
+    manifest_test = project_root / "tests" / "test_phase2_manifest_schema.py"
+    if not manifest_test.exists():
+        failures.append("tests/test_phase2_manifest_schema.py missing")
+    # failure_isolation config test exists
+    fi_test = project_root / "tests" / "test_phase2_failure_isolation_config.py"
+    if not fi_test.exists():
+        failures.append("tests/test_phase2_failure_isolation_config.py missing")
+    # failure_isolation config exists
+    config_path = project_root / "src" / "novel_workflow" / "config.py"
+    if config_path.exists():
+        content = config_path.read_text()
+        if "FAILURE_ISOLATION_DEFAULTS" not in content:
+            failures.append("FAILURE_ISOLATION_DEFAULTS not in config.py")
+    else:
+        failures.append("config.py missing")
+    return failures
+
+
 def main():
     parser = argparse.ArgumentParser(description="Phase 2 Change Gate check")
     parser.add_argument("--target-change", required=True,
-                        choices=["milestone0", "change1"])
+                        choices=["milestone0", "change1", "change2"])
     parser.add_argument("--project-root", default=None)
     args = parser.parse_args()
 
@@ -53,6 +81,7 @@ def main():
     checkers = {
         "milestone0": check_milestone0,
         "change1": check_change1,
+        "change2": check_change2,
     }
 
     failures = checkers[args.target_change](project_root)
