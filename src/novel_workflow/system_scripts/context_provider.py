@@ -27,16 +27,35 @@ class ContextProvider:
     Modes:
     - legacy: calls _build_context(), returns (context, None)
     - retrieval_shadow: calls _build_context(), returns (context, RetrievalTrace)
-    - retrieval_active: uses RetrievalContextBuilder with budget control
+    - retrieval_active: uses RetrievalContextBuilder with budget control,
+        StablePointer for stable reads, GenerationCache for caching
     """
 
     def __init__(self, root: Path, mode: str | None = None):
         self._root = root
         self._mode = mode or os.environ.get("NOVEL_WORKFLOW_CONTEXT_MODE", "legacy")
+        # Stable pointer and cache for active modes
+        self._stable_pointer = None
+        self._cache = None
+        if self.is_active_mode():
+            from .stable_generation_pointer import StableGenerationPointer
+            from .generation_cache import GenerationCache
+            self._stable_pointer = StableGenerationPointer(root)
+            self._cache = GenerationCache()
 
     @property
     def mode(self) -> str:
         return self._mode
+
+    @property
+    def stable_pointer(self):
+        """Access the StableGenerationPointer (active modes only)."""
+        return self._stable_pointer
+
+    @property
+    def cache(self):
+        """Access the GenerationCache (active modes only)."""
+        return self._cache
 
     def is_active_mode(self) -> bool:
         """Return True if current mode requires hard fail on trace errors."""
@@ -96,7 +115,22 @@ class ContextProvider:
             max_character_budget=budget,
         )
         context, trace = builder.build(request)
+
+        # Cache the context for this chapter
+        if self._cache:
+            cache_key = f"{agent_role}:{arc_id}:ch_{current_ch:03d}"
+            self._cache.put(cache_key, context)
+
         return context, trace
+
+    def invalidate_cache(self, generation_id: str = "") -> int:
+        """Invalidate cached context entries. If generation_id given, invalidate only that generation."""
+        if not self._cache:
+            return 0
+        if generation_id:
+            return self._cache.invalidate_generation(generation_id)
+        self._cache.clear()
+        return 0
 
     @staticmethod
     def write_trace(root: Path, arc_id: str, chapter_id: str, trace: RetrievalTrace) -> bool:
