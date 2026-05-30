@@ -5,6 +5,8 @@ from pathlib import Path
 from ..schemas.retrieval import RetrievalRequest, RetrievalTrace
 from ..schemas.enums import ContextBuilderMode
 
+ACTIVE_MODES = {"retrieval_active", "arc_active"}
+
 
 def _get_build_context():
     """Lazy import to avoid circular dependency with flow.py."""
@@ -18,11 +20,20 @@ class ContextProvider:
     Modes:
     - legacy: calls _build_context(), returns (context, None)
     - retrieval_shadow: calls _build_context(), returns (context, RetrievalTrace)
+    - retrieval_active/arc_active: reserved for future use
     """
 
     def __init__(self, root: Path, mode: str | None = None):
         self._root = root
         self._mode = mode or os.environ.get("NOVEL_WORKFLOW_CONTEXT_MODE", "legacy")
+
+    @property
+    def mode(self) -> str:
+        return self._mode
+
+    def is_active_mode(self) -> bool:
+        """Return True if current mode requires hard fail on trace errors."""
+        return self._mode in ACTIVE_MODES
 
     def build_writer_context(self, arc_id: str, current_ch: int) -> tuple[str, RetrievalTrace | None]:
         context = _get_build_context()(self._root, arc_id, current_ch)
@@ -46,16 +57,18 @@ class ContextProvider:
         return context, trace
 
     @staticmethod
-    def write_trace(root: Path, arc_id: str, chapter_id: str, trace: RetrievalTrace) -> None:
-        """Write retrieval trace to JSONL file. Non-fatal on failure."""
+    def write_trace(root: Path, arc_id: str, chapter_id: str, trace: RetrievalTrace) -> bool:
+        """Write retrieval trace to JSONL file. Returns True on success."""
         try:
             traces_dir = root / "workspace" / "retrieval_traces"
             traces_dir.mkdir(parents=True, exist_ok=True)
             trace_file = traces_dir / f"{chapter_id}.jsonl"
             with open(trace_file, "a", encoding="utf-8") as f:
                 f.write(trace.model_dump_json() + "\n")
+            return True
         except Exception as e:
             print(f"[ContextProvider] WARNING: failed to write trace for {chapter_id}: {e}")
+            return False
 
     def _make_shadow_trace(self, agent_role: str, arc_id: str, current_ch: int) -> RetrievalTrace:
         request = RetrievalRequest(
