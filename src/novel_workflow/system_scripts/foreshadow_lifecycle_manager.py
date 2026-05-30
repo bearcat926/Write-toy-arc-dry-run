@@ -106,8 +106,22 @@ class ForeshadowLifecycleManager:
                 except (json.JSONDecodeError, KeyError):
                     continue
 
-        return ForeshadowLifecycleIndex(
+        index = ForeshadowLifecycleIndex(
             index_id=f"lifecycle_{arc_id}",
             arc_id=arc_id,
             items=entries,
-        ), invalid_transitions
+        )
+
+        # Register in manifest
+        from .manifest_manager import ManifestManager
+        from ..schemas.manifest import DerivedArtifactEntry
+        manifest = ManifestManager(self._root)
+        manifest.register_artifact(DerivedArtifactEntry(
+            artifact_path="workspace/foreshadow_lifecycle_index.json",
+            artifact_type="foreshadow_lifecycle_index",
+            builder_name="ForeshadowLifecycleManager",
+            source_artifacts=[],
+        ))
+        manifest.save()
+
+        return index, invalid_transitions

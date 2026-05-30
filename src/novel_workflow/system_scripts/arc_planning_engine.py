@@ -68,6 +68,18 @@ class ArcPlanningEngine:
             status="pass",
         )
 
+        # Register in manifest
+        from .manifest_manager import ManifestManager
+        from ..schemas.manifest import DerivedArtifactEntry
+        manifest = ManifestManager(self._root)
+        manifest.register_artifact(DerivedArtifactEntry(
+            artifact_path=f"workspace/arc_plan/arc_{arc_id}_plan.json",
+            artifact_type="arc_plan",
+            builder_name="ArcPlanningEngine",
+            source_artifacts=[],
+        ))
+        manifest.save()
+
         return arc_plan, beat_plans, health_report
 
     @staticmethod

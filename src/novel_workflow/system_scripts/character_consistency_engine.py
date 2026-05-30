@@ -108,9 +108,23 @@ class CharacterConsistencyEngine:
         else:
             action = "approve"
 
-        return CharacterDriftReport(
+        report = CharacterDriftReport(
             arc_id=arc_id,
             chapter_id=chapter_id,
             findings=findings,
             recommended_action=action,
         )
+
+        # Register in manifest
+        from .manifest_manager import ManifestManager
+        from ..schemas.manifest import DerivedArtifactEntry
+        manifest = ManifestManager(self._root)
+        manifest.register_artifact(DerivedArtifactEntry(
+            artifact_path=f"workspace/reports/character_drift_report_{chapter_id}.json",
+            artifact_type="character_drift_report",
+            builder_name="CharacterConsistencyEngine",
+            source_artifacts=[],
+        ))
+        manifest.save()
+
+        return report

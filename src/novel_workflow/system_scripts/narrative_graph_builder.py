@@ -154,10 +154,24 @@ class NarrativeGraphBuilder:
                 except (json.JSONDecodeError, KeyError):
                     continue
 
-        return NarrativeGraphIndex(
+        graph = NarrativeGraphIndex(
             graph_id=f"graph_{arc_id or 'global'}",
             arc_id=arc_id,
             generated_from=generated_from,
             nodes=nodes,
             edges=edges,
         )
+
+        # Register in manifest
+        from .manifest_manager import ManifestManager
+        from ..schemas.manifest import DerivedArtifactEntry
+        manifest = ManifestManager(self._root)
+        manifest.register_artifact(DerivedArtifactEntry(
+            artifact_path="workspace/narrative_graph_index.json",
+            artifact_type="narrative_graph_index",
+            builder_name="NarrativeGraphBuilder",
+            source_artifacts=generated_from,
+        ))
+        manifest.save()
+
+        return graph
