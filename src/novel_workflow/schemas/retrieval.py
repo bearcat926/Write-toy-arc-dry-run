@@ -64,6 +64,7 @@ class RetrievedContextItem(SchemaVersioned):
     relevance_reason: str = ""
     priority: int = 0
     selection_reason: str = ""
+    source_hash_validation_status: Literal["valid", "stale", "missing", "not_required"] = "not_required"
 
     @field_validator("trust_level")
     @classmethod
@@ -106,6 +107,18 @@ class RetrievedContextItem(SchemaVersioned):
             if is_derived:
                 raise ValueError(f"trust_level={v.value} must have is_derived=False")
 
+        return v
+
+    @field_validator("source_hash_validation_status")
+    @classmethod
+    def validate_hash_status(cls, v: str, info) -> str:
+        trust_level = info.data.get("trust_level")
+        if trust_level and trust_level in HASH_REQUIRED_TRUST_LEVELS:
+            if v != "valid":
+                raise ValueError(f"trust_level={trust_level.value} requires source_hash_validation_status='valid'")
+        if trust_level == RetrievalTrustLevel.RUNTIME_CONTEXT:
+            if v != "not_required":
+                raise ValueError("runtime_context requires source_hash_validation_status='not_required'")
         return v
 
 
