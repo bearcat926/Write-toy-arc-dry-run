@@ -400,6 +400,16 @@ def run_novel_flow(
         draft_path = safe_write_draft(root, f"arcs/{arc_id}/drafts/{ch_id}.md", content)
         print(f"[NovelFlow] Draft saved to {draft_path}")
 
+        # Generate narrative summary (non-blocking)
+        if provider.mode != "legacy":
+            try:
+                from ..system_scripts.narrative_compressor import NarrativeCompressor
+                compressor = NarrativeCompressor(root)
+                summary = compressor.compress(arc_id, ch_id)
+                print(f"[NovelFlow] Summary generated for {ch_id}")
+            except Exception as e:
+                print(f"[NovelFlow] WARNING: summary generation failed for {ch_id}: {e}")
+
         # Auditor
         draft_content = draft_path.read_text(encoding="utf-8", errors="replace")
         auditor_prompt = f"Review chapter {ch_id} for continuity issues.\n\nDraft:\n{draft_content}\n\nStory context:\n{context}\n\nWrite ONLY the review content."
