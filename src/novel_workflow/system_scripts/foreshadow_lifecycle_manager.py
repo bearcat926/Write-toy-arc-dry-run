@@ -20,8 +20,13 @@ class ForeshadowLifecycleManager:
     def __init__(self, root: Path):
         self._root = root
 
-    def build(self, arc_id: str) -> ForeshadowLifecycleIndex:
-        """Build lifecycle index from foreshadowing ledger and summaries."""
+    def build(self, arc_id: str) -> tuple[ForeshadowLifecycleIndex, list[dict]]:
+        """Build lifecycle index from foreshadowing ledger and summaries.
+
+        Returns:
+            (index, invalid_transitions) — invalid_transitions is a list of
+            transition attempts that were rejected.
+        """
         entries: list[ForeshadowLifecycleEntry] = []
 
         # 1. Load foreshadowing ledger
@@ -31,7 +36,7 @@ class ForeshadowLifecycleManager:
                 index_id=f"lifecycle_{arc_id}",
                 arc_id=arc_id,
                 items=[],
-            )
+            ), []
 
         fs_data = json.loads(fs_path.read_text(encoding="utf-8"))
 
@@ -66,6 +71,7 @@ class ForeshadowLifecycleManager:
             entries.append(lifecycle_entry)
 
         # 3. Scan summaries for foreshadow state changes
+        invalid_transitions: list[dict] = []
         summaries_dir = self._root / "workspace" / "summaries"
         if summaries_dir.exists():
             for summary_file in sorted(summaries_dir.glob("ch_*_summary.json")):
@@ -75,21 +81,28 @@ class ForeshadowLifecycleManager:
 
                     for fs_update in data.get("foreshadow_updates", []):
                         if isinstance(fs_update, str):
-                            # Simple string update — try to match foreshadow_id
                             for entry in entries:
                                 if entry.foreshadow_id in fs_update:
-                                    # Advance state if possible
                                     next_states = {
                                         "seeded": "activated",
                                         "latent": "activated",
                                         "activated": "escalated",
                                     }
                                     next_state = next_states.get(entry.current_state)
-                                    if next_state and validate_transition(entry.current_state, next_state):
-                                        try:
-                                            apply_transition(entry, next_state, ch_id)
-                                        except ValueError:
-                                            pass  # Invalid transition — skip
+                                    if next_state:
+                                        if validate_transition(entry.current_state, next_state):
+                                            try:
+                                                apply_transition(entry, next_state, ch_id)
+                                            except ValueError:
+                                                pass
+                                        else:
+                                            invalid_transitions.append({
+                                                "foreshadow_id": entry.foreshadow_id,
+                                                "from_state": entry.current_state,
+                                                "to_state": next_state,
+                                                "chapter_id": ch_id,
+                                                "reason": "invalid_transition",
+                                            })
                 except (json.JSONDecodeError, KeyError):
                     continue
 
@@ -97,4 +110,4 @@ class ForeshadowLifecycleManager:
             index_id=f"lifecycle_{arc_id}",
             arc_id=arc_id,
             items=entries,
-        )
+        ), invalid_transitions

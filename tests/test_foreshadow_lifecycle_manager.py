@@ -28,9 +28,10 @@ def _seed_project(root: Path):
 def test_build_creates_entries(tmp_path: Path):
     _seed_project(tmp_path)
     manager = ForeshadowLifecycleManager(tmp_path)
-    idx = manager.build("arc_001")
+    idx, invalid = manager.build("arc_001")
     assert idx.derived is True
     assert len(idx.items) == 3
+    assert invalid == []
 
 
 def test_state_mapping_from_ledger(tmp_path: Path):
@@ -46,7 +47,7 @@ def test_state_mapping_from_ledger(tmp_path: Path):
         ],
     }), encoding="utf-8")
     manager = ForeshadowLifecycleManager(tmp_path)
-    idx = manager.build("arc_001")
+    idx, _ = manager.build("arc_001")
     states = {item.foreshadow_id: item.current_state for item in idx.items}
     assert states["fs1"] == "seeded"      # introduced → seeded
     assert states["fs2"] == "activated"   # developed → activated
@@ -56,7 +57,7 @@ def test_state_mapping_from_ledger(tmp_path: Path):
 def test_summary_updates_state(tmp_path: Path):
     _seed_project(tmp_path)
     manager = ForeshadowLifecycleManager(tmp_path)
-    idx = manager.build("arc_001")
+    idx, _ = manager.build("arc_001")
     # fs1 should have been activated by summary
     fs1 = next(item for item in idx.items if item.foreshadow_id == "fs1")
     assert fs1.current_state == "activated"
@@ -71,5 +72,5 @@ def test_empty_ledger(tmp_path: Path):
         encoding="utf-8",
     )
     manager = ForeshadowLifecycleManager(tmp_path)
-    idx = manager.build("arc_001")
+    idx, _ = manager.build("arc_001")
     assert len(idx.items) == 0
