@@ -45,3 +45,13 @@ FORESHADOW_TRANSITIONS = {
     "paid_off": set(),
     "abandoned": set(),
 }
+
+# Phase 2: Failure isolation policy per context mode
+FAILURE_ISOLATION_DEFAULTS = {
+    "legacy": "best_effort",
+    "retrieval_shadow": "chapter",
+    "retrieval_active": "strict",
+    "arc_active": "strict",
+}
+
+ACTIVE_FAILURE_MODES = {"strict", "chapter"}  # best_effort not allowed in active modes

@@ -35,6 +35,20 @@ class ContextProvider:
         """Return True if current mode requires hard fail on trace errors."""
         return self._mode in ACTIVE_MODES
 
+    def get_failure_isolation(self) -> str:
+        """Return the failure isolation policy for the current mode."""
+        from ..config import FAILURE_ISOLATION_DEFAULTS, ACTIVE_FAILURE_MODES
+        env_val = os.environ.get("NOVEL_WORKFLOW_FAILURE_ISOLATION")
+        if env_val:
+            if env_val not in ("strict", "chapter", "best_effort"):
+                raise ValueError(f"Invalid NOVEL_WORKFLOW_FAILURE_ISOLATION: {env_val}")
+            if self.is_active_mode() and env_val not in ACTIVE_FAILURE_MODES:
+                raise ValueError(
+                    f"Active mode '{self._mode}' cannot use failure_isolation='{env_val}'"
+                )
+            return env_val
+        return FAILURE_ISOLATION_DEFAULTS.get(self._mode, "best_effort")
+
     def build_writer_context(self, arc_id: str, current_ch: int) -> tuple[str, RetrievalTrace | None]:
         context = _get_build_context()(self._root, arc_id, current_ch)
         if self._mode == "legacy":
