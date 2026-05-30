@@ -2,9 +2,14 @@
 import os
 from pathlib import Path
 
-from ..crewai.flow import _build_context
 from ..schemas.retrieval import RetrievalRequest, RetrievalTrace
 from ..schemas.enums import ContextBuilderMode
+
+
+def _get_build_context():
+    """Lazy import to avoid circular dependency with flow.py."""
+    from ..crewai.flow import _build_context
+    return _build_context
 
 
 class ContextProvider:
@@ -20,21 +25,21 @@ class ContextProvider:
         self._mode = mode or os.environ.get("NOVEL_WORKFLOW_CONTEXT_MODE", "legacy")
 
     def build_writer_context(self, arc_id: str, current_ch: int) -> tuple[str, RetrievalTrace | None]:
-        context = _build_context(self._root, arc_id, current_ch)
+        context = _get_build_context()(self._root, arc_id, current_ch)
         if self._mode == "legacy":
             return context, None
         trace = self._make_shadow_trace("writer", arc_id, current_ch)
         return context, trace
 
     def build_auditor_context(self, arc_id: str, current_ch: int) -> tuple[str, RetrievalTrace | None]:
-        context = _build_context(self._root, arc_id, current_ch)
+        context = _get_build_context()(self._root, arc_id, current_ch)
         if self._mode == "legacy":
             return context, None
         trace = self._make_shadow_trace("auditor", arc_id, current_ch)
         return context, trace
 
     def build_extractor_context(self, arc_id: str, current_ch: int) -> tuple[str, RetrievalTrace | None]:
-        context = _build_context(self._root, arc_id, current_ch)
+        context = _get_build_context()(self._root, arc_id, current_ch)
         if self._mode == "legacy":
             return context, None
         trace = self._make_shadow_trace("extractor", arc_id, current_ch)
