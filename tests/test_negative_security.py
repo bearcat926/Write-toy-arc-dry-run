@@ -21,13 +21,10 @@ def test_symlink_escape_rejected(project_root: Path):
     target.write_text("evil")
     symlink_path = project_root / "arcs" / "arc_001" / "drafts" / "escape.md"
     symlink_path.parent.mkdir(parents=True, exist_ok=True)
-    try:
-        os.symlink(str(target), str(symlink_path))
-    except OSError:
-        pytest.skip("Symlink creation not supported (requires admin on Windows)")
-
-    with pytest.raises(PathSafetyError, match="SYMLINK_ESCAPE_REJECTED"):
-        guard.check_write_path("arcs/arc_001/drafts/escape.md", "agent")
+    from tests.symlink_helper import SymlinkFallback
+    with SymlinkFallback(str(target), str(symlink_path)):
+        with pytest.raises(PathSafetyError, match="SYMLINK_ESCAPE_REJECTED"):
+            guard.check_write_path("arcs/arc_001/drafts/escape.md", "agent")
 
 
 # --- P1.11: TOCTOU symlink race ---
@@ -46,15 +43,12 @@ def test_toctou_symlink_race_rejected(project_root: Path):
     # Now simulate TOCTOU: replace the file with a symlink to outside
     evil_target = project_root.parent / "evil.txt"
     evil_target.write_text("evil content")
-    try:
-        valid_path.unlink()
-        os.symlink(str(evil_target), str(valid_path))
-    except OSError:
-        pytest.skip("Symlink creation not supported (requires admin on Windows)")
-
-    # Re-check should reject because resolved path escapes workspace
-    with pytest.raises(PathSafetyError, match="SYMLINK_ESCAPE_REJECTED"):
-        guard.check_write_path("arcs/arc_001/drafts/ch_001.md", "agent")
+    valid_path.unlink()
+    from tests.symlink_helper import SymlinkFallback
+    with SymlinkFallback(str(evil_target), str(valid_path)):
+        # Re-check should reject because resolved path escapes workspace
+        with pytest.raises(PathSafetyError, match="SYMLINK_ESCAPE_REJECTED"):
+            guard.check_write_path("arcs/arc_001/drafts/ch_001.md", "agent")
 
 
 # --- P1.14: ProgressEntry(contains_narrative_fact=True) raises ---

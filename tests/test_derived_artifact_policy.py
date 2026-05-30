@@ -64,14 +64,11 @@ def test_symlink_derived_rejected(tmp_path: Path):
     (tmp_path / "canon").mkdir(parents=True)
     (tmp_path / "canon" / "real.json").write_text("{}")
 
+    from tests.symlink_helper import SymlinkFallback
     symlink_path = tmp_path / "workspace" / "summaries" / "ch_001_summary.json"
-    try:
-        os.symlink(str(tmp_path / "canon" / "real.json"), str(symlink_path))
-    except OSError:
-        pytest.skip("Symlink creation not supported (requires admin on Windows)")
-
-    with pytest.raises(ValueError, match=SYMLINK_DERIVED_PATH_REJECTED):
-        assert_safe_derived_path(tmp_path, "workspace/summaries/ch_001_summary.json")
+    with SymlinkFallback(str(tmp_path / "canon" / "real.json"), str(symlink_path)):
+        with pytest.raises(ValueError, match=SYMLINK_DERIVED_PATH_REJECTED):
+            assert_safe_derived_path(tmp_path, "workspace/summaries/ch_001_summary.json")
 
 
 def test_symlink_to_outside_rejected(tmp_path: Path):
@@ -80,10 +77,7 @@ def test_symlink_to_outside_rejected(tmp_path: Path):
     outside.write_text("{}")
     (tmp_path / "workspace" / "summaries").mkdir(parents=True)
     symlink_path = tmp_path / "workspace" / "summaries" / "escape.json"
-    try:
-        os.symlink(str(outside), str(symlink_path))
-    except OSError:
-        pytest.skip("Symlink creation not supported (requires admin on Windows)")
-
-    with pytest.raises(ValueError):
-        assert_safe_derived_path(tmp_path, "workspace/summaries/escape.json")
+    from tests.symlink_helper import SymlinkFallback
+    with SymlinkFallback(str(outside), str(symlink_path)):
+        with pytest.raises(ValueError):
+            assert_safe_derived_path(tmp_path, "workspace/summaries/escape.json")

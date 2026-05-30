@@ -137,11 +137,8 @@ def test_intermediate_symlink_rejected_by_guard(project_root: Path):
     (real_dir / "arc_001" / "drafts").mkdir()
 
     arcs_link = project_root / "arcs"
-    try:
-        os.symlink(str(real_dir), str(arcs_link))
-    except OSError:
-        pytest.skip("Symlink creation not supported (requires admin on Windows)")
-
-    guard = PathSafetyGuard(project_root)
-    with pytest.raises(PathSafetyError, match="SYMLINK_ESCAPE_REJECTED"):
-        guard.check_write_path("arcs/arc_001/drafts/ch_001.md", "agent")
+    from tests.symlink_helper import SymlinkFallback
+    with SymlinkFallback(str(real_dir), str(arcs_link)):
+        guard = PathSafetyGuard(project_root)
+        with pytest.raises(PathSafetyError, match="SYMLINK_ESCAPE_REJECTED"):
+            guard.check_write_path("arcs/arc_001/drafts/ch_001.md", "agent")

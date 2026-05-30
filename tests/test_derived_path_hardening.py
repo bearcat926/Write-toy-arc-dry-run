@@ -38,13 +38,10 @@ def test_parent_symlink_rejected(tmp_path: Path):
     (real_dir / "summaries" / "ch_001.json").write_text("{}")
 
     ws_link = tmp_path / "workspace"
-    try:
-        os.symlink(str(real_dir), str(ws_link))
-    except OSError:
-        pytest.skip("Symlink creation not supported (requires admin on Windows)")
-
-    with pytest.raises(ValueError, match=SYMLINK_DERIVED_PATH_REJECTED):
-        assert_safe_derived_path(tmp_path, "workspace/summaries/ch_001.json")
+    from tests.symlink_helper import SymlinkFallback
+    with SymlinkFallback(str(real_dir), str(ws_link)):
+        with pytest.raises(ValueError, match=SYMLINK_DERIVED_PATH_REJECTED):
+            assert_safe_derived_path(tmp_path, "workspace/summaries/ch_001.json")
 
 
 def test_intermediate_dir_symlink_rejected(tmp_path: Path):
@@ -55,13 +52,10 @@ def test_intermediate_dir_symlink_rejected(tmp_path: Path):
 
     (tmp_path / "workspace").mkdir()
     summaries_link = tmp_path / "workspace" / "summaries"
-    try:
-        os.symlink(str(real_summaries), str(summaries_link))
-    except OSError:
-        pytest.skip("Symlink creation not supported (requires admin on Windows)")
-
-    with pytest.raises(ValueError, match=SYMLINK_DERIVED_PATH_REJECTED):
-        assert_safe_derived_path(tmp_path, "workspace/summaries/ch_001.json")
+    from tests.symlink_helper import SymlinkFallback
+    with SymlinkFallback(str(real_summaries), str(summaries_link)):
+        with pytest.raises(ValueError, match=SYMLINK_DERIVED_PATH_REJECTED):
+            assert_safe_derived_path(tmp_path, "workspace/summaries/ch_001.json")
 
 
 def test_assert_no_symlink_in_path_clean(tmp_path: Path):

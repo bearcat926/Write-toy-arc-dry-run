@@ -42,14 +42,8 @@ def test_arc_state_manager_symlink_escape_rejected(project_root: Path):
     symlink_path = project_root / "arcs" / "arc_001" / "arc_working_state.json"
     symlink_path.parent.mkdir(parents=True, exist_ok=True)
 
-    # On Windows, symlinks may require admin. Skip if not supported.
-    try:
-        os.symlink(str(target), str(symlink_path))
-    except OSError:
-        pytest.skip("Symlink creation not supported (requires admin on Windows)")
-
-    mgr = ArcWorkingStateManager(project_root)
-    # The guard checks the path resolution, not the content
-    # Since the symlink target is outside workspace, it should be rejected
-    with pytest.raises(PathSafetyError, match="SYMLINK_ESCAPE_REJECTED"):
-        mgr.initialize("arc_001")
+    from tests.symlink_helper import SymlinkFallback
+    with SymlinkFallback(str(target), str(symlink_path)):
+        mgr = ArcWorkingStateManager(project_root)
+        with pytest.raises(PathSafetyError, match="SYMLINK_ESCAPE_REJECTED"):
+            mgr.initialize("arc_001")
