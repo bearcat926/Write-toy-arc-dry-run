@@ -12,8 +12,31 @@ from ..schemas.narrative_graph import NarrativeNode, NarrativeEdge, NarrativeGra
 class NarrativeGraphBuilder:
     """Builds NarrativeGraphIndex from ledgers and summaries."""
 
+    MAX_NODES = 500
+    MAX_EDGES = 2000
+
     def __init__(self, root: Path):
         self._root = root
+
+    @staticmethod
+    def check_budget(graph: NarrativeGraphIndex) -> dict:
+        """Check if graph exceeds growth budget. Returns budget report."""
+        node_count = len(graph.nodes)
+        edge_count = len(graph.edges)
+        exceeded = node_count > NarrativeGraphBuilder.MAX_NODES or edge_count > NarrativeGraphBuilder.MAX_EDGES
+        warnings = []
+        if node_count > NarrativeGraphBuilder.MAX_NODES:
+            warnings.append(f"node_count {node_count} exceeds max {NarrativeGraphBuilder.MAX_NODES}")
+        if edge_count > NarrativeGraphBuilder.MAX_EDGES:
+            warnings.append(f"edge_count {edge_count} exceeds max {NarrativeGraphBuilder.MAX_EDGES}")
+        return {
+            "node_count": node_count,
+            "edge_count": edge_count,
+            "max_nodes": NarrativeGraphBuilder.MAX_NODES,
+            "max_edges": NarrativeGraphBuilder.MAX_EDGES,
+            "budget_exceeded": exceeded,
+            "warnings": warnings,
+        }
 
     def build(self, arc_id: str | None = None) -> NarrativeGraphIndex:
         """Build narrative graph from all available sources."""
