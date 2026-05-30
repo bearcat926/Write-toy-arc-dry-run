@@ -113,6 +113,47 @@ class RetrievalContextBuilder:
                 except (json.JSONDecodeError, KeyError):
                     continue
 
+        # 4. Narrative graph index (if available)
+        graph_path = self._root / "workspace" / "narrative_graph_index.json"
+        if graph_path.exists():
+            try:
+                data = json.loads(graph_path.read_text(encoding="utf-8"))
+                node_count = len(data.get("nodes", []))
+                edge_count = len(data.get("edges", []))
+                items.append(RetrievedContextItem(
+                    item_id="narrative_graph_index",
+                    item_type="narrative_graph_index",
+                    content=f"Narrative graph: {node_count} nodes, {edge_count} edges",
+                    is_derived=True,
+                    trust_level=RetrievalTrustLevel.DERIVED_GRAPH,
+                    relevance_reason="Narrative structure graph",
+                    priority=40,
+                    selection_reason="score_derived_graph",
+                ))
+            except (json.JSONDecodeError, KeyError):
+                pass
+
+        # 5. Foreshadow lifecycle index (if available)
+        lifecycle_path = self._root / "workspace" / "foreshadow_lifecycle_index.json"
+        if lifecycle_path.exists():
+            try:
+                data = json.loads(lifecycle_path.read_text(encoding="utf-8"))
+                items_data = data.get("items", [])
+                active_count = sum(1 for it in items_data
+                                   if it.get("current_state") in ("activated", "escalated"))
+                items.append(RetrievedContextItem(
+                    item_id="foreshadow_lifecycle_index",
+                    item_type="foreshadow_lifecycle_index",
+                    content=f"Foreshadow lifecycle: {len(items_data)} items, {active_count} active",
+                    is_derived=True,
+                    trust_level=RetrievalTrustLevel.DERIVED_LIFECYCLE,
+                    relevance_reason="Foreshadow lifecycle state",
+                    priority=35,
+                    selection_reason="score_derived_lifecycle",
+                ))
+            except (json.JSONDecodeError, KeyError):
+                pass
+
         return items
 
     def _select_and_budget(
