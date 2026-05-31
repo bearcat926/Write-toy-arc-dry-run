@@ -48,7 +48,7 @@ def test_gate1_generation_lifecycle(tmp_path: Path):
     """Gate 1: All derived artifacts have generation lifecycle."""
     _seed_project(tmp_path)
     orchestrator = RebuildOrchestrator(tmp_path)
-    result = orchestrator.rebuild("arc_001", "ch_001", "test")
+    result = orchestrator.rebuild(arc_id="arc_001", chapter_id="ch_001", reason="test")
     assert result.success is True
     manifest = ManifestManager(tmp_path).load()
     entries = [e for e in manifest.entries if e.artifact_type == "narrative_summary"]
@@ -78,7 +78,7 @@ def test_gate3_retrieval_validator(tmp_path: Path):
     """Gate 3: stale/missing hard fail in active mode."""
     _seed_project(tmp_path)
     # Use RebuildOrchestrator to generate summary + manifest entry
-    RebuildOrchestrator(tmp_path).rebuild("arc_001", "ch_001", "test")
+    RebuildOrchestrator(tmp_path).rebuild(arc_id="arc_001", chapter_id="ch_001", reason="test")
     validator = RetrievalValidator(tmp_path)
     result = validator.validate_for_active("arc_001", "ch_001")
     assert result.is_valid is True
@@ -90,7 +90,7 @@ def test_gate4_rebuild_orchestrator(tmp_path: Path):
     """Gate 4: Rollback rebuild by dependency order."""
     _seed_project(tmp_path)
     orchestrator = RebuildOrchestrator(tmp_path)
-    result = orchestrator.rebuild("arc_001", "ch_001", "test")
+    result = orchestrator.rebuild(arc_id="arc_001", chapter_id="ch_001", reason="test")
     assert result.success is True
 
 

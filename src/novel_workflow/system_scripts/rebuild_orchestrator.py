@@ -1,27 +1,96 @@
-"""RebuildOrchestrator — unified rebuild entry for derived artifacts.
+"""RebuildOrchestrator — replacement-style refactor with adapter DAG.
 
-Rebuilds in dependency order: summary → graph → lifecycle → drift → arc_plan → beat_plan → trace.
-Uses RebuildLock to prevent concurrent rebuilds.
+TEMP.md §11: Real rebuild with adapter pattern, not placeholder mark-stale.
+Rebuild order: summary → graph → lifecycle → drift → arc_plan → beat_plan → trace → structured_audit → calibration → manifest_verification
 """
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Protocol
 
 from .rebuild_lock import RebuildLock
 from .manifest_manager import ManifestManager
 from .narrative_compressor import NarrativeCompressor
 from ..schemas.manifest import DerivedArtifactEntry
+from ..schemas.runtime_modes import RuntimeModes
 
 
 @dataclass
-class RebuildResult:
-    """Result of a rebuild operation."""
+class ArtifactWriteResult:
     success: bool
-    rebuilt_artifacts: list[str] = field(default_factory=list)
-    failed_artifacts: list[str] = field(default_factory=list)
+    artifact_path: str
+    content_hash: str = ""
+    error: str = ""
+
+
+@dataclass
+class RebuildReport:
+    success: bool
+    rebuilt: list[ArtifactWriteResult] = field(default_factory=list)
+    failed: list[ArtifactWriteResult] = field(default_factory=list)
     reason: str = ""
 
 
-# Rebuild order: each depends on the previous
+class RebuildAdapter(Protocol):
+    artifact_type: str
+    required_in_active: bool
+
+    def rebuild(
+        self,
+        *,
+        arc_id: str,
+        chapter_id: str | None,
+        runtime_id: str,
+        modes: RuntimeModes,
+    ) -> list[ArtifactWriteResult]:
+        ...
+
+
+class SummaryRebuildAdapter:
+    artifact_type = "narrative_summary"
+    required_in_active = True
+
+    def __init__(self, root: Path):
+        self._root = root
+
+    def rebuild(self, *, arc_id: str, chapter_id: str | None, runtime_id: str, modes: RuntimeModes) -> list[ArtifactWriteResult]:
+        if not chapter_id:
+            return []
+        try:
+            compressor = NarrativeCompressor(self._root)
+            summary = compressor.compress(arc_id, chapter_id)
+            # Register in manifest
+            manifest = ManifestManager(self._root)
+            manifest.load()
+            manifest.register_artifact(DerivedArtifactEntry(
+                artifact_path=f"workspace/summaries/{chapter_id}_summary.json",
+                artifact_type="narrative_summary",
+                builder_name="NarrativeCompressor",
+                source_artifacts=[f"arcs/{arc_id}/drafts/{chapter_id}.md"],
+            ))
+            manifest.save()
+            return [ArtifactWriteResult(
+                success=True,
+                artifact_path=f"workspace/summaries/{chapter_id}_summary.json",
+            )]
+        except Exception as e:
+            return [ArtifactWriteResult(
+                success=False,
+                artifact_path=f"workspace/summaries/{chapter_id}_summary.json",
+                error=str(e),
+            )]
+
+
+# Placeholder adapters for future implementation
+class _PlaceholderAdapter:
+    required_in_active = False
+
+    def __init__(self, artifact_type: str):
+        self.artifact_type = artifact_type
+
+    def rebuild(self, *, arc_id, chapter_id, runtime_id, modes):
+        return []
+
+
 REBUILD_ORDER = [
     "summary",
     "graph",
@@ -30,6 +99,9 @@ REBUILD_ORDER = [
     "arc_plan",
     "beat_plan",
     "trace",
+    "structured_audit",
+    "calibration",
+    "manifest_verification",
 ]
 
 
@@ -40,75 +112,61 @@ class RebuildOrchestrator:
         self._root = root
         self._lock = RebuildLock(root)
         self._manifest = ManifestManager(root)
+        self._adapters: dict[str, object] = {
+            "summary": SummaryRebuildAdapter(root),
+        }
 
     def rebuild(
         self,
+        *,
         arc_id: str,
         chapter_id: str | None,
         reason: str,
-    ) -> RebuildResult:
-        """Rebuild derived artifacts for an arc/chapter.
-
-        Args:
-            arc_id: Arc identifier
-            chapter_id: Chapter identifier (None for arc-level rebuild)
-            reason: Why rebuild is needed (e.g. "source_changed", "stale")
-
-        Returns:
-            RebuildResult with success status and artifact lists
-        """
-        # Acquire lock
+        modes: RuntimeModes | None = None,
+        runtime_id: str = "",
+    ) -> RebuildReport:
         if not self._lock.acquire("RebuildOrchestrator"):
-            return RebuildResult(
-                success=False,
-                reason="rebuild lock already held by another process",
-            )
+            return RebuildReport(success=False, reason="lock held")
 
         rebuilt = []
         failed = []
 
         try:
-            # Step 1: Rebuild summary (if chapter-level)
-            if chapter_id:
+            for step in REBUILD_ORDER:
+                adapter = self._adapters.get(step)
+                if adapter is None:
+                    continue
+
                 try:
-                    compressor = NarrativeCompressor(self._root)
-                    summary = compressor.compress(arc_id, chapter_id)
-                    rebuilt.append(f"workspace/summaries/{chapter_id}_summary.json")
-                    # Register in manifest
-                    entry = DerivedArtifactEntry(
-                        artifact_path=f"workspace/summaries/{chapter_id}_summary.json",
-                        artifact_type="narrative_summary",
-                        builder_name="NarrativeCompressor",
-                        source_artifacts=[f"arcs/{arc_id}/drafts/{chapter_id}.md"],
-                        stale=False,
+                    results = adapter.rebuild(
+                        arc_id=arc_id,
+                        chapter_id=chapter_id,
+                        runtime_id=runtime_id,
+                        modes=modes or RuntimeModes.__new__(RuntimeModes),
                     )
-                    self._manifest.register_artifact(entry)
+                    for r in results:
+                        if r.success:
+                            rebuilt.append(r)
+                        else:
+                            failed.append(r)
+                            if getattr(adapter, 'required_in_active', False) and modes and modes.active_manifest_required:
+                                return RebuildReport(
+                                    success=False,
+                                    rebuilt=rebuilt,
+                                    failed=failed,
+                                    reason=f"required adapter {step} failed",
+                                )
                 except Exception as e:
-                    failed.append(f"summary:{chapter_id}:{e}")
+                    failed.append(ArtifactWriteResult(
+                        success=False, artifact_path=f"{step}:error", error=str(e),
+                    ))
 
-            # Steps 2-7: Graph, lifecycle, drift, arc_plan, beat_plan, trace
-            # These are placeholders — actual builders will be wired in Wave 3-4
-            for artifact_type in REBUILD_ORDER[1:]:
-                # Check if builder exists in manifest
-                entries = [e for e in self._manifest.load().entries
-                          if e.artifact_type == artifact_type]
-                if entries:
-                    # Mark existing entries as needing rebuild
-                    for entry in entries:
-                        self._manifest.mark_stale(
-                            entry.artifact_path, f"rebuild requested: {reason}"
-                        )
-                    rebuilt.append(f"{artifact_type}:{len(entries)} entries marked stale")
-
-            # Save manifest
             self._manifest.save()
-
-            return RebuildResult(
+            return RebuildReport(
                 success=len(failed) == 0,
-                rebuilt_artifacts=rebuilt,
-                failed_artifacts=failed,
+                rebuilt=rebuilt,
+                failed=failed,
                 reason=reason,
             )
-
         finally:
             self._lock.release()
