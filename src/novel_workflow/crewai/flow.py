@@ -223,16 +223,20 @@ def _run_revision_loop(
         for ch_id in current_rejected:
             ch_num = int(ch_id.split("_")[1])
             if provider:
-                context, trace = provider.build_writer_context(arc_id, ch_num)
-                if trace:
-                    ContextProvider.write_trace(root, arc_id, ch_id, trace)
+                writer_context, writer_trace = provider.build_writer_context(arc_id, ch_num)
+                if writer_trace:
+                    ContextProvider.write_trace(root, arc_id, ch_id, writer_trace)
+                auditor_context, auditor_trace = provider.build_auditor_context(arc_id, ch_num)
+                if auditor_trace:
+                    ContextProvider.write_trace(root, arc_id, ch_id, auditor_trace)
             else:
-                context = _build_context(root, arc_id, ch_num)
+                writer_context = _build_context(root, arc_id, ch_num)
+                auditor_context = writer_context
 
             # Rewrite
             writer_prompt = (
                 f"Rewrite chapter {ch_id} to fix continuity and quality issues.\n\n"
-                f"Context:\n{context}\n\nWrite ONLY the chapter content in markdown."
+                f"Context:\n{writer_context}\n\nWrite ONLY the chapter content in markdown."
             )
             writer_result = writer.kickoff(writer_prompt)
             content = writer_result.raw if hasattr(writer_result, 'raw') else str(writer_result)
@@ -243,7 +247,7 @@ def _run_revision_loop(
             draft_content = draft_path.read_text(encoding="utf-8", errors="replace")
             auditor_prompt = (
                 f"Review revised chapter {ch_id} for continuity issues.\n\n"
-                f"Draft:\n{draft_content}\n\nContext:\n{context}\n\nWrite ONLY the review."
+                f"Draft:\n{draft_content}\n\nContext:\n{auditor_context}\n\nWrite ONLY the review."
             )
             auditor_result = auditor.kickoff(auditor_prompt)
             review_content = auditor_result.raw if hasattr(auditor_result, 'raw') else str(auditor_result)
@@ -386,12 +390,21 @@ def run_novel_flow(
         ch_id = f"ch_{ch_num:03d}"
         print(f"\n[NovelFlow] === Chapter {ch_id} ===")
 
-        context, trace = provider.build_writer_context(arc_id, ch_num)
-        if trace:
-            ContextProvider.write_trace(root, arc_id, ch_id, trace)
+        # Build role-specific contexts
+        writer_context, writer_trace = provider.build_writer_context(arc_id, ch_num)
+        if writer_trace:
+            ContextProvider.write_trace(root, arc_id, ch_id, writer_trace)
+
+        auditor_context, auditor_trace = provider.build_auditor_context(arc_id, ch_num)
+        if auditor_trace:
+            ContextProvider.write_trace(root, arc_id, ch_id, auditor_trace)
+
+        extractor_context, extractor_trace = provider.build_extractor_context(arc_id, ch_num)
+        if extractor_trace:
+            ContextProvider.write_trace(root, arc_id, ch_id, extractor_trace)
 
         # Writer
-        writer_prompt = f"Write chapter {ch_id} of the story.\n\nStory context:\n{context}\n\nWrite ONLY the chapter content in markdown format."
+        writer_prompt = f"Write chapter {ch_id} of the story.\n\nStory context:\n{writer_context}\n\nWrite ONLY the chapter content in markdown format."
         print(f"[TIMER] ch={ch_id} agent=Writer prompt_len={len(writer_prompt)} starting...")
         _t0 = time.time()
         writer_result = writer.kickoff(writer_prompt)
@@ -412,7 +425,7 @@ def run_novel_flow(
 
         # Auditor
         draft_content = draft_path.read_text(encoding="utf-8", errors="replace")
-        auditor_prompt = f"Review chapter {ch_id} for continuity issues.\n\nDraft:\n{draft_content}\n\nStory context:\n{context}\n\nWrite ONLY the review content."
+        auditor_prompt = f"Review chapter {ch_id} for continuity issues.\n\nDraft:\n{draft_content}\n\nStory context:\n{auditor_context}\n\nWrite ONLY the review content."
         print(f"[TIMER] ch={ch_id} agent=Auditor prompt_len={len(auditor_prompt)} starting...")
         _t0 = time.time()
         auditor_result = auditor.kickoff(auditor_prompt)
@@ -427,6 +440,7 @@ def run_novel_flow(
         budgeted_review = _apply_budget(review_content, REVIEW_BUDGET)
         extractor_prompt = (
             f"Extract narrative facts from chapter {ch_id} as JSON.\n\n"
+            f"Context:\n{extractor_context}\n\n"
             f"Draft:\n{budgeted_draft}\n\n"
             f"Review:\n{budgeted_review}\n\n"
             f"Output a JSON object with this structure:\n"
