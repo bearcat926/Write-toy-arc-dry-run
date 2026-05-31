@@ -157,7 +157,21 @@ def test_gate11_drift_streak(tmp_path: Path):
     assert s3 == "hard_pause"
 
 
-def test_gate12_change_gate_exists():
-    """Gate 12: Change gate script exists."""
+def test_gate12_drift_gold_dataset():
+    """Gate 12: Drift gold dataset has precision/recall/fpr metrics."""
+    from pathlib import Path
+    gold_dir = Path("tests/fixtures/drift_gold")
+    assert gold_dir.exists()
+    assert (gold_dir / "gold_manifest.json").exists()
+    import json
+    manifest = json.loads((gold_dir / "gold_manifest.json").read_text())
+    assert manifest["case_count"] >= 5
+    assert manifest["positive_cases"] >= 3
+    # Quality checker exists
+    assert Path("tools/check_drift_quality.py").exists()
+
+
+def test_gate13_change_gate_exists():
+    """Gate 13: Change gate script exists."""
     from pathlib import Path
     assert Path("tools/check_phase2_change_gate.py").exists()
