@@ -65,7 +65,7 @@ def test_consistency_engine_registers_manifest(tmp_path: Path):
 def test_arc_planner_registers_manifest(tmp_path: Path):
     _seed_project(tmp_path)
     engine = ArcPlanningEngine(tmp_path)
-    engine.plan_arc("arc_001", chapter_count=3)
+    engine.ensure_arc_artifacts(arc_id="arc_001", chapter_count=3)
     manifest = ManifestManager(tmp_path).load()
     arc_entries = [e for e in manifest.entries if e.artifact_type == "arc_plan"]
     assert len(arc_entries) == 1

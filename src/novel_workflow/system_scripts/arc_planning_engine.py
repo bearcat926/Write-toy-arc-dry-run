@@ -1,37 +1,28 @@
-"""ArcPlanningEngine — generates ArcPlan and ChapterBeatPlans from arc_contract.
+"""ArcPlanningEngine — generates ArcPlan, ChapterBeatPlans, and ArcHealthReport.
 
-First version: deterministic extraction from contract text.
-Future: LLM-assisted planning.
+TEMP.md §8.2: plan_arc() must be pure (generate objects only).
+TEMP.md §8.3: ensure_arc_artifacts() handles persistence.
 """
-import re
 from pathlib import Path
 
-from ..schemas.arc_plan import ArcPlan, ChapterBeatPlan, ArcHealthReport, ArcHealthFinding
+from ..schemas.arc_plan import ArcPlan, ChapterBeatPlan, ArcHealthReport
+from .artifact_writer import ArtifactWriter
 
 
 class ArcPlanningEngine:
-    """Generates arc plans from arc_contract.md."""
+    """Generates and persists arc planning artifacts."""
 
     def __init__(self, root: Path):
         self._root = root
 
     def plan_arc(self, arc_id: str, chapter_count: int = 10) -> tuple[ArcPlan, list[ChapterBeatPlan], ArcHealthReport]:
-        """Generate ArcPlan, ChapterBeatPlans, and ArcHealthReport from arc contract.
-
-        Args:
-            arc_id: Arc identifier
-            chapter_count: Number of chapters to plan
-
-        Returns:
-            (arc_plan, beat_plans, health_report)
-        """
+        """Pure function: generate planning objects. No side effects."""
         contract_path = self._root / "arcs" / arc_id / "arc_contract.md"
         if not contract_path.exists():
             raise FileNotFoundError(f"Arc contract not found: arcs/{arc_id}/arc_contract.md")
 
         content = contract_path.read_text(encoding="utf-8", errors="replace")
 
-        # Extract basic info from contract
         title = self._extract_heading(content, level=1) or arc_id
         goal = self._extract_section(content, "goal") or self._extract_section(content, "objective") or ""
         requirements = self._extract_list_items(content, "requirement")
@@ -39,7 +30,6 @@ class ArcPlanningEngine:
 
         chapter_range = [f"ch_{i:03d}" for i in range(1, chapter_count + 1)]
 
-        # Generate ArcPlan
         arc_plan = ArcPlan(
             arc_id=arc_id,
             arc_title=title,
@@ -50,7 +40,6 @@ class ArcPlanningEngine:
             source_artifact=f"arcs/{arc_id}/arc_contract.md",
         )
 
-        # Generate ChapterBeatPlans
         beat_plans = []
         for ch in chapter_range:
             beat = ChapterBeatPlan(
@@ -61,69 +50,101 @@ class ArcPlanningEngine:
             )
             beat_plans.append(beat)
 
-        # Generate ArcHealthReport
         health_report = ArcHealthReport(
             arc_id=arc_id,
             findings=[],
             status="pass",
         )
 
-        # Register in manifest
-        from .manifest_manager import ManifestManager
-        from ..schemas.manifest import DerivedArtifactEntry
-        manifest = ManifestManager(self._root)
-        manifest.register_artifact(DerivedArtifactEntry(
-            artifact_path=f"workspace/arc_plan/arc_{arc_id}_plan.json",
+        return arc_plan, beat_plans, health_report
+
+    def ensure_arc_artifacts(
+        self,
+        *,
+        arc_id: str,
+        chapter_count: int,
+        runtime_id: str = "",
+        required: bool = False,
+    ) -> dict:
+        """Generate and persist arc artifacts. Returns persisted paths."""
+        arc_plan, beat_plans, health_report = self.plan_arc(arc_id, chapter_count)
+        writer = ArtifactWriter(self._root)
+
+        source = [f"arcs/{arc_id}/arc_contract.md"]
+
+        results = {}
+
+        # Persist ArcPlan
+        plan_path = f"workspace/arc_plan/{arc_id}_plan.json"
+        r = writer.write_json_artifact(
+            rel_path=plan_path,
             artifact_type="arc_plan",
             builder_name="ArcPlanningEngine",
-            source_artifacts=[],
-        ))
-        manifest.save()
+            payload=arc_plan,
+            source_artifacts=source,
+            runtime_id=runtime_id,
+            required=required,
+        )
+        results["arc_plan"] = r
 
-        return arc_plan, beat_plans, health_report
+        # Persist ChapterBeatPlans
+        for beat in beat_plans:
+            beat_path = f"workspace/arc_plan/{arc_id}_{beat.chapter_id}_beat_plan.json"
+            r = writer.write_json_artifact(
+                rel_path=beat_path,
+                artifact_type="chapter_beat_plan",
+                builder_name="ArcPlanningEngine",
+                payload=beat,
+                source_artifacts=source,
+                runtime_id=runtime_id,
+                required=required,
+            )
+            results[beat.chapter_id] = r
+
+        # Persist HealthReport
+        health_path = f"workspace/arc_plan/{arc_id}_health_report.json"
+        r = writer.write_json_artifact(
+            rel_path=health_path,
+            artifact_type="arc_health_report",
+            builder_name="ArcPlanningEngine",
+            payload=health_report,
+            source_artifacts=source,
+            runtime_id=runtime_id,
+            required=required,
+        )
+        results["health_report"] = r
+
+        return results
 
     @staticmethod
     def _extract_heading(content: str, level: int = 1) -> str:
-        """Extract first heading of given level."""
-        prefix = "#" * level
+        prefix = "#" * level + " "
         for line in content.split("\n"):
-            stripped = line.strip()
-            if stripped.startswith(prefix + " ") and not stripped.startswith(prefix + "#"):
-                return stripped[len(prefix):].strip()
+            if line.strip().startswith(prefix):
+                return line.strip()[len(prefix):].strip()
         return ""
 
     @staticmethod
     def _extract_section(content: str, keyword: str) -> str:
-        """Extract text under a section heading containing keyword."""
         lines = content.split("\n")
-        in_section = False
+        capture = False
         result = []
         for line in lines:
-            stripped = line.strip()
-            if stripped.startswith("#") and keyword.lower() in stripped.lower():
-                in_section = True
+            if line.lower().startswith(f"#") and keyword.lower() in line.lower():
+                capture = True
                 continue
-            if in_section:
-                if stripped.startswith("#"):
-                    break
-                if stripped:
-                    result.append(stripped)
-        return " ".join(result)
+            if capture and line.startswith("#"):
+                break
+            if capture:
+                result.append(line)
+        return "\n".join(result).strip()
 
     @staticmethod
     def _extract_list_items(content: str, keyword: str) -> list[str]:
-        """Extract list items under a section containing keyword."""
-        lines = content.split("\n")
-        in_section = False
+        section = ArcPlanningEngine._extract_section(content, keyword)
         items = []
-        for line in lines:
-            stripped = line.strip()
-            if stripped.startswith("#") and keyword.lower() in stripped.lower():
-                in_section = True
-                continue
-            if in_section:
-                if stripped.startswith("#"):
-                    break
-                if stripped.startswith("- ") or stripped.startswith("* "):
-                    items.append(stripped[2:].strip())
+        for line in section.split("\n"):
+            line = line.strip()
+            if line.startswith("- ") or line.startswith("* "):
+                items.append(line[2:].strip())
         return items
