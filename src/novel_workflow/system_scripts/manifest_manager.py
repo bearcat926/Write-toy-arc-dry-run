@@ -88,6 +88,54 @@ class ManifestManager:
                 pass
             raise
 
+    def register_persisted_artifact(self, entry: DerivedArtifactEntry) -> None:
+        """Register an artifact that has been written to disk. Validates existence and hash."""
+        abs_path = self._root / entry.artifact_path
+
+        if not abs_path.exists():
+            raise FileNotFoundError(f"Manifest ghost entry: {entry.artifact_path}")
+
+        # Compute actual hash
+        import hashlib
+        h = hashlib.sha256()
+        with open(abs_path, "rb") as f:
+            for chunk in iter(lambda: f.read(8192), b""):
+                h.update(chunk)
+        actual_hash = h.hexdigest()
+
+        if entry.content_hash and entry.content_hash != actual_hash:
+            raise ValueError(f"Hash mismatch for {entry.artifact_path}")
+
+        if entry.required and not entry.source_artifacts:
+            raise ValueError(f"Required artifact {entry.artifact_path} has no source_artifacts")
+
+        if not entry.content_hash:
+            entry.content_hash = actual_hash
+
+        self.register_artifact(entry)
+
+    def verify_required_artifacts(self, *, active: bool = False) -> list[str]:
+        """Verify all required artifacts exist and are not stale. Returns list of failures."""
+        manifest = self.load()
+        failures = []
+        for entry in manifest.entries:
+            if not entry.required:
+                continue
+            abs_path = self._root / entry.artifact_path
+            if not abs_path.exists():
+                failures.append(f"missing required: {entry.artifact_path}")
+            elif entry.stale:
+                failures.append(f"stale required: {entry.artifact_path}")
+            elif active and entry.content_hash:
+                import hashlib
+                h = hashlib.sha256()
+                with open(abs_path, "rb") as f:
+                    for chunk in iter(lambda: f.read(8192), b""):
+                        h.update(chunk)
+                if h.hexdigest() != entry.content_hash:
+                    failures.append(f"hash mismatch: {entry.artifact_path}")
+        return failures
+
     def get_entry(self, artifact_path: str) -> DerivedArtifactEntry | None:
         """Get manifest entry by artifact path."""
         manifest = self.load()
