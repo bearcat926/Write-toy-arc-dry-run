@@ -66,7 +66,7 @@ def test_stress_50_traces_written(tmp_path: Path):
         assert trace is not None
         ContextProvider.write_trace(tmp_path, "arc_001", f"ch_{i:03d}", trace)
     for i in range(1, 51):
-        assert (tmp_path / "workspace" / "retrieval_traces" / f"ch_{i:03d}.jsonl").exists()
+        assert (tmp_path / "workspace" / "retrieval_traces" / "arc_001" / f"ch_{i:03d}" / "writer.jsonl").exists()
 
 
 def test_stress_50_context_bounded(tmp_path: Path):

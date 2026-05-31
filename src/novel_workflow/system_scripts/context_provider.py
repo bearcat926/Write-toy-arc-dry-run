@@ -133,14 +133,29 @@ class ContextProvider:
         return 0
 
     @staticmethod
-    def write_trace(root: Path, arc_id: str, chapter_id: str, trace: RetrievalTrace) -> bool:
+    def write_role_trace_path(
+        *,
+        root: Path,
+        arc_id: str,
+        chapter_id: str,
+        trace: RetrievalTrace,
+        role: str = "writer",
+    ) -> Path:
+        """Write role-specific retrieval trace to JSONL file. Returns path on success."""
+        out_dir = root / "workspace" / "retrieval_traces" / arc_id / chapter_id
+        out_dir.mkdir(parents=True, exist_ok=True)
+        path = out_dir / f"{role}.jsonl"
+        with open(path, "a", encoding="utf-8") as f:
+            f.write(trace.model_dump_json() + "\n")
+        return path
+
+    @staticmethod
+    def write_trace(root: Path, arc_id: str, chapter_id: str, trace: RetrievalTrace, role: str = "writer") -> bool:
         """Write retrieval trace to JSONL file. Returns True on success."""
         try:
-            traces_dir = root / "workspace" / "retrieval_traces"
-            traces_dir.mkdir(parents=True, exist_ok=True)
-            trace_file = traces_dir / f"{chapter_id}.jsonl"
-            with open(trace_file, "a", encoding="utf-8") as f:
-                f.write(trace.model_dump_json() + "\n")
+            ContextProvider.write_role_trace_path(
+                root=root, arc_id=arc_id, chapter_id=chapter_id, trace=trace, role=role,
+            )
             return True
         except Exception as e:
             print(f"[ContextProvider] WARNING: failed to write trace for {chapter_id}: {e}")

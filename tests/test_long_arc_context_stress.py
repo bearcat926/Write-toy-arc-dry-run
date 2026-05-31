@@ -86,7 +86,7 @@ def test_stress_10_chapters_traces_written(tmp_path: Path):
 
     # All traces should exist
     for i in range(1, 11):
-        path = tmp_path / "workspace" / "retrieval_traces" / f"ch_{i:03d}.jsonl"
+        path = tmp_path / "workspace" / "retrieval_traces" / "arc_001" / f"ch_{i:03d}" / "writer.jsonl"
         assert path.exists()
 
 
