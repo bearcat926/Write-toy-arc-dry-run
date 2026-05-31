@@ -11,6 +11,21 @@ def _seed_project(root: Path):
     (root / "arcs" / "arc_001" / "drafts" / "ch_001.md").write_text(
         "# Chapter 1\n\nAlice walked in. Bob looked up.", encoding="utf-8"
     )
+    (root / "arcs" / "arc_001" / "arc_contract.md").write_text(
+        "# Contract\nGoal: journey.", encoding="utf-8"
+    )
+    (root / "canon").mkdir(exist_ok=True)
+    (root / "canon" / "approved_outline.md").write_text("# Outline", encoding="utf-8")
+    (root / "ledgers").mkdir(exist_ok=True)
+    (root / "ledgers" / "timeline.json").write_text(
+        json.dumps({"schema_version": "1.0", "events": []}), encoding="utf-8"
+    )
+    (root / "ledgers" / "character_knowledge.json").write_text(
+        json.dumps({"schema_version": "1.0", "entries": []}), encoding="utf-8"
+    )
+    (root / "ledgers" / "foreshadowing.json").write_text(
+        json.dumps({"schema_version": "1.0", "foreshadowing_entries": []}), encoding="utf-8"
+    )
 
 
 def test_rebuild_summary(tmp_path: Path):
@@ -49,3 +64,13 @@ def test_rebuild_arc_level(tmp_path: Path):
     orchestrator = RebuildOrchestrator(tmp_path)
     result = orchestrator.rebuild(arc_id="arc_001", chapter_id=None, reason="arc_rebuild")
     assert result.success is True
+
+
+def test_all_adapters_registered(tmp_path: Path):
+    """All 8 required adapters must be registered."""
+    from novel_workflow.system_scripts.rebuild_orchestrator import SummaryRebuildAdapter, GraphRebuildAdapter, LifecycleRebuildAdapter, DriftRebuildAdapter, ArcPlanRebuildAdapter, BeatPlanRebuildAdapter, TraceRebuildAdapter, CalibrationRebuildAdapter
+    orchestrator = RebuildOrchestrator(tmp_path)
+    required = {"summary", "graph", "lifecycle", "drift", "arc_plan", "beat_plan", "trace", "calibration"}
+    for step in required:
+        assert step in orchestrator._adapters, f"Missing adapter: {step}"
+        assert not isinstance(orchestrator._adapters[step], type(None)), f"Null adapter: {step}"
