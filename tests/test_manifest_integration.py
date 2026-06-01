@@ -45,7 +45,7 @@ def test_graph_builder_registers_manifest(tmp_path: Path):
 def test_lifecycle_manager_registers_manifest(tmp_path: Path):
     _seed_project(tmp_path)
     manager = ForeshadowLifecycleManager(tmp_path)
-    manager.build("arc_001")
+    manager.write_index("arc_001")  # write_index builds + writes + registers
     manifest = ManifestManager(tmp_path).load()
     lc_entries = [e for e in manifest.entries if e.artifact_type == "foreshadow_lifecycle_index"]
     assert len(lc_entries) == 1

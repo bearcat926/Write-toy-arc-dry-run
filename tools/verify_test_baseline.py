@@ -2,6 +2,7 @@
 
 import argparse
 import re
+import subprocess
 import sys
 import xml.etree.ElementTree as ET
 from pathlib import Path
@@ -95,6 +96,34 @@ def generate_baseline_md(results, base_commit, python_version):
     return "\n".join(lines)
 
 
+def project_root():
+    return Path(__file__).resolve().parent.parent
+
+
+def resolve_base_commit(commit, root):
+    if commit:
+        return commit
+
+    try:
+        result = subprocess.run(
+            ["git", "rev-parse", "--short", "HEAD"],
+            cwd=root,
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+    except (OSError, subprocess.CalledProcessError) as exc:
+        detail = getattr(exc, "stderr", "") or str(exc)
+        print(f"ERROR: unable to resolve git HEAD for baseline: {detail}", file=sys.stderr)
+        sys.exit(2)
+
+    resolved = result.stdout.strip()
+    if not resolved:
+        print("ERROR: git HEAD resolved to an empty commit", file=sys.stderr)
+        sys.exit(2)
+    return resolved
+
+
 def check_consistency(results, project_root):
     """Regex check README.md and docs/phase2_protocol_freeze_verification.md
     for test count patterns. Return list of error strings.
@@ -144,7 +173,7 @@ def main():
     )
     parser.add_argument(
         "--commit",
-        default="unknown",
+        default=None,
         help="Base commit hash to record in baseline",
     )
     parser.add_argument(
@@ -155,9 +184,10 @@ def main():
     args = parser.parse_args()
 
     results = parse_junit_xml(args.junit)
+    base_commit = resolve_base_commit(args.commit, project_root())
 
     # Always generate baseline
-    md = generate_baseline_md(results, args.commit, args.python)
+    md = generate_baseline_md(results, base_commit, args.python)
     out_path = Path(args.output)
     out_path.parent.mkdir(parents=True, exist_ok=True)
     out_path.write_text(md, encoding="utf-8")
@@ -168,8 +198,8 @@ def main():
 
     # Optionally check consistency
     if args.check:
-        project_root = Path(__file__).resolve().parent.parent
-        errs = check_consistency(results, project_root)
+        root = project_root()
+        errs = check_consistency(results, root)
         if errs:
             print(f"\nConsistency check found {len(errs)} issue(s):")
             for e in errs:

@@ -77,6 +77,26 @@ def test_stress_10_chapters_summaries_generated(tmp_path: Path):
 def test_stress_10_chapters_traces_written(tmp_path: Path):
     """Each chapter should produce a retrieval trace in active mode."""
     _seed_project(tmp_path, chapters=10)
+    # Seed manifest with required artifacts for active mode
+    from novel_workflow.system_scripts.manifest_manager import ManifestManager
+    from novel_workflow.schemas.manifest import DerivedArtifactEntry
+    mgr = ManifestManager(tmp_path)
+    (tmp_path / "workspace" / "summaries").mkdir(parents=True, exist_ok=True)
+    (tmp_path / "workspace" / "summaries" / "ch_001_summary.json").write_text(
+        '{"chapter_id": "ch_001"}', encoding="utf-8"
+    )
+    mgr.register_artifact(DerivedArtifactEntry(
+        artifact_path="workspace/summaries/ch_001_summary.json",
+        artifact_type="narrative_summary", builder_name="test",
+    ))
+    (tmp_path / "workspace" / "foreshadow_lifecycle_index.json").write_text(
+        '{"index_id": "test", "arc_id": "arc_001", "items": []}', encoding="utf-8"
+    )
+    mgr.register_artifact(DerivedArtifactEntry(
+        artifact_path="workspace/foreshadow_lifecycle_index.json",
+        artifact_type="foreshadow_lifecycle_index", builder_name="test",
+    ))
+    mgr.save()
     provider = ContextProvider(tmp_path, mode="retrieval_active")
 
     for i in range(1, 11):

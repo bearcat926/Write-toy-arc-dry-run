@@ -40,7 +40,19 @@ class CharacterConsistencyEngine:
         if not draft_path.exists():
             return CharacterDriftReport(
                 arc_id=arc_id, chapter_id=chapter_id,
-                findings=[], recommended_action="approve",
+                findings=[CharacterDriftFinding(
+                    finding_id=f"drift_{chapter_id}_000",
+                    character_id=character_id,
+                    chapter_id=chapter_id,
+                    drift_type="missing_draft",
+                    severity="hard_pause",
+                    evidence=f"Draft not found: {draft_path}",
+                    expected_pattern="Draft file exists",
+                    observed_pattern="Draft file missing",
+                    source_artifact=f"arcs/{arc_id}/drafts/{chapter_id}.md",
+                    recommended_action="hard_pause",
+                )],
+                recommended_action="hard_pause",
             )
 
         content = draft_path.read_text(encoding="utf-8", errors="replace").lower()

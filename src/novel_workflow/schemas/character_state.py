@@ -54,6 +54,7 @@ class CharacterDriftFinding(SchemaVersioned):
         "emotional_discontinuity",
         "knowledge_boundary_violation",
         "relationship_discontinuity",
+        "missing_draft",
     ]
     severity: Literal["soft_warning", "creative_review", "hard_pause"]
     evidence: str
