@@ -118,12 +118,34 @@ class RetrievalContextBuilder:
         if graph_path.exists():
             try:
                 data = json.loads(graph_path.read_text(encoding="utf-8"))
-                node_count = len(data.get("nodes", []))
-                edge_count = len(data.get("edges", []))
+                nodes = data.get("nodes", [])
+                edges = data.get("edges", [])
+                # Include actual node/edge data for retrieval
+                content_parts = [f"Narrative graph: {len(nodes)} nodes, {len(edges)} edges"]
+                # Add character nodes
+                char_nodes = [n for n in nodes if n.get("node_type") == "character"]
+                if char_nodes:
+                    content_parts.append("Characters: " + ", ".join(
+                        n.get("label", n.get("node_id", "?")) for n in char_nodes[:20]
+                    ))
+                # Add active foreshadow edges
+                fs_edges = [e for e in edges if e.get("edge_type") == "foreshadow"]
+                if fs_edges:
+                    content_parts.append("Foreshadow links: " + "; ".join(
+                        f"{e.get('source_id', '?')} → {e.get('target_id', '?')}"
+                        for e in fs_edges[:15]
+                    ))
+                # Add relationship edges
+                rel_edges = [e for e in edges if e.get("edge_type") == "relationship"]
+                if rel_edges:
+                    content_parts.append("Relationships: " + "; ".join(
+                        f"{e.get('source_id', '?')} → {e.get('target_id', '?')}"
+                        for e in rel_edges[:15]
+                    ))
                 items.append(RetrievedContextItem(
                     item_id="narrative_graph_index",
                     item_type="narrative_graph_index",
-                    content=f"Narrative graph: {node_count} nodes, {edge_count} edges",
+                    content="\n".join(content_parts),
                     is_derived=True,
                     trust_level=RetrievalTrustLevel.DERIVED_GRAPH,
                     relevance_reason="Narrative structure graph",
@@ -139,12 +161,24 @@ class RetrievalContextBuilder:
             try:
                 data = json.loads(lifecycle_path.read_text(encoding="utf-8"))
                 items_data = data.get("items", [])
-                active_count = sum(1 for it in items_data
-                                   if it.get("current_state") in ("activated", "escalated"))
+                active_items = [it for it in items_data
+                                if it.get("current_state") in ("activated", "escalated")]
+                content_parts = [
+                    f"Foreshadow lifecycle: {len(items_data)} items, {len(active_items)} active",
+                ]
+                # Include active foreshadow details
+                for it in active_items[:20]:
+                    label = it.get("label", it.get("foreshadow_id", "?"))
+                    state = it.get("current_state", "?")
+                    priority = it.get("priority", "?")
+                    introduced = it.get("introduced_chapter", "?")
+                    content_parts.append(
+                        f"  [{state}] {label} (priority={priority}, since {introduced})"
+                    )
                 items.append(RetrievedContextItem(
                     item_id="foreshadow_lifecycle_index",
                     item_type="foreshadow_lifecycle_index",
-                    content=f"Foreshadow lifecycle: {len(items_data)} items, {active_count} active",
+                    content="\n".join(content_parts),
                     is_derived=True,
                     trust_level=RetrievalTrustLevel.DERIVED_LIFECYCLE,
                     relevance_reason="Foreshadow lifecycle state",

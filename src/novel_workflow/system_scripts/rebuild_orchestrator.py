@@ -117,14 +117,15 @@ class LifecycleRebuildAdapter:
         try:
             from .foreshadow_lifecycle_manager import ForeshadowLifecycleManager
             manager = ForeshadowLifecycleManager(self._root)
-            manager.build(arc_id)
+            index, _transitions = manager.write_index(arc_id)
             manifest = ManifestManager(self._root)
             manifest.load()
-            manifest.register_artifact(DerivedArtifactEntry(
+            manifest.register_persisted_artifact(DerivedArtifactEntry(
                 artifact_path="workspace/foreshadow_lifecycle_index.json",
                 artifact_type="foreshadow_lifecycle_index",
                 builder_name="ForeshadowLifecycleManager",
                 source_artifacts=[f"ledgers/foreshadowing.json"],
+                required=True,
             ))
             manifest.save()
             return [ArtifactWriteResult(success=True, artifact_path="workspace/foreshadow_lifecycle_index.json")]
@@ -158,9 +159,18 @@ class DriftRebuildAdapter:
                     character_id=character_id, baseline=baseline,
                 )
                 findings.extend(report.findings if hasattr(report, 'findings') else [])
+            # Aggregate: use max severity across all findings
+            _SEVERITY_ORDER = {"hard_pause": 3, "creative_review": 2, "soft_warning": 1, "approve": 0}
+            max_action = "approve"
+            max_sev = 0
+            for f in findings:
+                sev = _SEVERITY_ORDER.get(getattr(f, 'severity', 'approve'), 0)
+                if sev > max_sev:
+                    max_sev = sev
+                    max_action = getattr(f, 'recommended_action', getattr(f, 'severity', 'approve'))
             drift_report = CharacterDriftReport(
                 arc_id=arc_id, chapter_id=chapter_id,
-                findings=findings, recommended_action="approve",
+                findings=findings, recommended_action=max_action,
             )
             report_dir = self._root / "workspace" / "reports" / "character_drift" / arc_id
             report_dir.mkdir(parents=True, exist_ok=True)
@@ -191,7 +201,14 @@ class ArcPlanRebuildAdapter:
         try:
             from .arc_planning_engine import ArcPlanningEngine
             engine = ArcPlanningEngine(self._root)
-            arc_plan, beat_plans, health_report = engine.plan_arc(arc_id, chapter_count=10)
+            # Determine chapter count from existing drafts
+            drafts_dir = self._root / "arcs" / arc_id / "drafts"
+            if drafts_dir.exists():
+                chapter_count = len(list(drafts_dir.glob("ch_*.md")))
+            else:
+                chapter_count = 10  # fallback default
+            chapter_count = max(chapter_count, 10)  # ensure minimum planning horizon
+            arc_plan, beat_plans, health_report = engine.plan_arc(arc_id, chapter_count=chapter_count)
             plan_dir = self._root / "workspace" / "arc_plan" / arc_id
             plan_dir.mkdir(parents=True, exist_ok=True)
             plan_path = plan_dir / "arc_plan.json"
@@ -294,6 +311,60 @@ class CalibrationRebuildAdapter:
         return []
 
 
+class StructuredAuditRebuildAdapter:
+    artifact_type = "structured_audit_report"
+    required_in_active = False
+
+    def __init__(self, root: Path):
+        self._root = root
+
+    def rebuild(self, *, arc_id: str, chapter_id: str | None, runtime_id: str, modes) -> list[ArtifactWriteResult]:
+        if not chapter_id:
+            return []
+        try:
+            from .structured_auditor import StructuredAuditor
+            draft_path = self._root / "arcs" / arc_id / "drafts" / f"{chapter_id}.md"
+            draft_content = ""
+            if draft_path.exists():
+                draft_content = draft_path.read_text(encoding="utf-8", errors="replace")
+            auditor = StructuredAuditor(self._root)
+            report = auditor.audit_chapter(arc_id, chapter_id, draft_content=draft_content)
+            manifest = ManifestManager(self._root)
+            manifest.load()
+            manifest.register_artifact(DerivedArtifactEntry(
+                artifact_path=f"workspace/reports/structured_audit_{chapter_id}.json",
+                artifact_type="structured_audit_report",
+                builder_name="StructuredAuditor",
+                source_artifacts=[f"arcs/{arc_id}/drafts/{chapter_id}.md"],
+            ))
+            manifest.save()
+            return [ArtifactWriteResult(success=True, artifact_path=f"workspace/reports/structured_audit_{chapter_id}.json")]
+        except Exception as e:
+            return [ArtifactWriteResult(success=False, artifact_path=f"structured_audit:{chapter_id}", error=str(e))]
+
+
+class ManifestVerificationAdapter:
+    artifact_type = "manifest_verification"
+    required_in_active = True
+
+    def __init__(self, root: Path):
+        self._root = root
+
+    def rebuild(self, *, arc_id: str, chapter_id: str | None, runtime_id: str, modes) -> list[ArtifactWriteResult]:
+        try:
+            manifest = ManifestManager(self._root)
+            failures = manifest.verify_required_artifacts(active=True)
+            if failures:
+                return [ArtifactWriteResult(
+                    success=False,
+                    artifact_path="manifest_verification",
+                    error=f"required artifacts missing: {failures}",
+                )]
+            return [ArtifactWriteResult(success=True, artifact_path="manifest_verification")]
+        except Exception as e:
+            return [ArtifactWriteResult(success=False, artifact_path="manifest_verification", error=str(e))]
+
+
 # Placeholder adapters for future implementation
 class _PlaceholderAdapter:
     required_in_active = False
@@ -334,7 +405,9 @@ class RebuildOrchestrator:
             "arc_plan": ArcPlanRebuildAdapter(root),
             "beat_plan": BeatPlanRebuildAdapter(root),
             "trace": TraceRebuildAdapter(root),
+            "structured_audit": StructuredAuditRebuildAdapter(root),
             "calibration": CalibrationRebuildAdapter(root),
+            "manifest_verification": ManifestVerificationAdapter(root),
         }
 
     def rebuild(

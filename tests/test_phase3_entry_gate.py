@@ -61,7 +61,7 @@ def test_gate2_builder_auto_register(tmp_path: Path):
     # Graph builder
     NarrativeGraphBuilder(tmp_path).build("arc_001")
     # Lifecycle manager
-    ForeshadowLifecycleManager(tmp_path).build("arc_001")
+    ForeshadowLifecycleManager(tmp_path).write_index("arc_001")
     # Drift engine
     CharacterConsistencyEngine(tmp_path).check_chapter(
         "arc_001", "ch_001", "alice",

@@ -58,9 +58,11 @@ def test_voice_markers_present_no_drift(tmp_path: Path):
     assert len(voice_findings) == 0
 
 
-def test_missing_draft_returns_empty_report(tmp_path: Path):
+def test_missing_draft_returns_hard_pause(tmp_path: Path):
     engine = CharacterConsistencyEngine(tmp_path)
     baseline = CharacterBaseline(character_id="hero")
     report = engine.check_chapter("arc_001", "ch_999", "hero", baseline)
-    assert len(report.findings) == 0
-    assert report.recommended_action == "approve"
+    assert len(report.findings) == 1
+    assert report.findings[0].drift_type == "missing_draft"
+    assert report.findings[0].severity == "hard_pause"
+    assert report.recommended_action == "hard_pause"

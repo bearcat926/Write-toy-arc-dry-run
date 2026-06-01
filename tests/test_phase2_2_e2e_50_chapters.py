@@ -52,7 +52,24 @@ def test_e2e_full_chain(tmp_path: Path):
         assert len(context) > 0
         assert trace.derived is True
 
-    # Step 3: Build context with traces
+    # Step 3: Build context with traces (active mode requires manifest)
+    from novel_workflow.schemas.manifest import DerivedArtifactEntry
+    mgr = ManifestManager(tmp_path)
+    # Register summaries in manifest for stable pointer check
+    for i in range(1, 11):
+        mgr.register_artifact(DerivedArtifactEntry(
+            artifact_path=f"workspace/summaries/ch_{i:03d}_summary.json",
+            artifact_type="narrative_summary", builder_name="NarrativeCompressor",
+        ))
+    # Register lifecycle index
+    (tmp_path / "workspace" / "foreshadow_lifecycle_index.json").write_text(
+        '{"index_id": "test", "arc_id": "arc_001", "items": []}', encoding="utf-8"
+    )
+    mgr.register_artifact(DerivedArtifactEntry(
+        artifact_path="workspace/foreshadow_lifecycle_index.json",
+        artifact_type="foreshadow_lifecycle_index", builder_name="test",
+    ))
+    mgr.save()
     provider = ContextProvider(tmp_path, mode="retrieval_active")
     for i in range(1, 11):
         context, trace = provider.build_writer_context("arc_001", i)

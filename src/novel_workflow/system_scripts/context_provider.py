@@ -104,7 +104,30 @@ class ContextProvider:
         return context, trace
 
     def _build_active_context(self, agent_role: str, arc_id: str, current_ch: int) -> tuple[str, RetrievalTrace]:
-        """Build context using RetrievalContextBuilder for active mode."""
+        """Build context using RetrievalContextBuilder for active mode.
+
+        Enforces stable pointer reads: if required artifacts exist in the
+        manifest, they must be non-stale. Cold start (empty manifest) is
+        allowed; stale or rollback-residue reads are blocked.
+        """
+        # Verify required artifacts through stable pointer
+        if self._stable_pointer:
+            manifest = self._stable_pointer._manifest.load()
+            required_types = ["narrative_summary", "foreshadow_lifecycle_index"]
+            for artifact_type in required_types:
+                # Check if ANY entries of this type exist
+                has_entries = any(
+                    e.artifact_type == artifact_type for e in manifest.entries
+                )
+                if has_entries:
+                    # If entries exist, at least one must be stable
+                    entry = self._stable_pointer.get_stable(artifact_type)
+                    if entry is None:
+                        raise RuntimeError(
+                            f"Active mode blocked: artifact type '{artifact_type}' "
+                            f"exists in manifest but all entries are stale"
+                        )
+
         from .retrieval_context_builder import RetrievalContextBuilder
         builder = RetrievalContextBuilder(self._root)
         budget = _ROLE_BUDGETS.get(agent_role, 12000)
@@ -116,10 +139,12 @@ class ContextProvider:
         )
         context, trace = builder.build(request)
 
-        # Cache the context for this chapter
+        # Cache with generation-scoped key
         if self._cache:
+            manifest = self._stable_pointer._manifest.load() if self._stable_pointer else None
+            gen_id = manifest.batch_generation_id if manifest else ""
             cache_key = f"{agent_role}:{arc_id}:ch_{current_ch:03d}"
-            self._cache.put(cache_key, context)
+            self._cache.put(cache_key, context, generation_id=gen_id)
 
         return context, trace
 
@@ -150,14 +175,19 @@ class ContextProvider:
         return path
 
     @staticmethod
-    def write_trace(root: Path, arc_id: str, chapter_id: str, trace: RetrievalTrace, role: str = "writer") -> bool:
-        """Write retrieval trace to JSONL file. Returns True on success."""
+    def write_trace(root: Path, arc_id: str, chapter_id: str, trace: RetrievalTrace, role: str = "writer", *, active: bool = False) -> bool:
+        """Write retrieval trace to JSONL file. Returns True on success.
+
+        In active mode, raises on failure instead of returning False.
+        """
         try:
             ContextProvider.write_role_trace_path(
                 root=root, arc_id=arc_id, chapter_id=chapter_id, trace=trace, role=role,
             )
             return True
         except Exception as e:
+            if active:
+                raise RuntimeError(f"Active mode: trace write failed for {chapter_id}: {e}") from e
             print(f"[ContextProvider] WARNING: failed to write trace for {chapter_id}: {e}")
             return False
 

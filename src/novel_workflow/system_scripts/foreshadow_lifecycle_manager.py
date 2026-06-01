@@ -112,24 +112,26 @@ class ForeshadowLifecycleManager:
             items=entries,
         )
 
-        # Register in manifest
-        from .manifest_manager import ManifestManager
-        from ..schemas.manifest import DerivedArtifactEntry
-        manifest = ManifestManager(self._root)
-        manifest.register_artifact(DerivedArtifactEntry(
-            artifact_path="workspace/foreshadow_lifecycle_index.json",
-            artifact_type="foreshadow_lifecycle_index",
-            builder_name="ForeshadowLifecycleManager",
-            source_artifacts=[],
-        ))
-        manifest.save()
-
         return index, invalid_transitions
 
     def write_index(self, arc_id: str) -> tuple:
-        """Build and write lifecycle index to disk."""
+        """Build and write lifecycle index to disk, then register in manifest."""
         index, transitions = self.build(arc_id)
         output_path = self._root / "workspace" / "foreshadow_lifecycle_index.json"
         output_path.parent.mkdir(parents=True, exist_ok=True)
         output_path.write_text(index.model_dump_json(indent=2), encoding="utf-8")
+
+        # Register in manifest AFTER file is on disk
+        from .manifest_manager import ManifestManager
+        from ..schemas.manifest import DerivedArtifactEntry
+        manifest = ManifestManager(self._root)
+        manifest.register_persisted_artifact(DerivedArtifactEntry(
+            artifact_path="workspace/foreshadow_lifecycle_index.json",
+            artifact_type="foreshadow_lifecycle_index",
+            builder_name="ForeshadowLifecycleManager",
+            source_artifacts=["ledgers/foreshadowing.json"],
+            required=True,
+        ))
+        manifest.save()
+
         return index, transitions
