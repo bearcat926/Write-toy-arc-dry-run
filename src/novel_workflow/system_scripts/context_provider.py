@@ -106,30 +106,25 @@ class ContextProvider:
     def _build_active_context(self, agent_role: str, arc_id: str, current_ch: int) -> tuple[str, RetrievalTrace]:
         """Build context using RetrievalContextBuilder for active mode.
 
-        Enforces stable pointer reads: if required artifacts exist in the
-        manifest, they must be non-stale. Cold start (empty manifest) is
-        allowed; stale or rollback-residue reads are blocked.
+        Enforces stable pointer reads via snapshot. Uses GenerationCache
+        for cache-hit short-circuit. Cold start (empty manifest) is allowed.
         """
-        # Verify required artifacts through stable pointer
+        cache_key = f"{agent_role}:{arc_id}:ch_{current_ch:03d}"
+
+        # Check cache first (Patch C4)
+        if self._cache:
+            cached = self._cache.get(cache_key)
+            if cached is not None:
+                return cached["context"], cached["trace"]
+
+        # Build stable snapshot (Patch C1)
+        snapshot = None
         if self._stable_pointer:
-            manifest = self._stable_pointer._manifest.load()
             required_types = ["narrative_summary", "foreshadow_lifecycle_index"]
-            for artifact_type in required_types:
-                # Check if ANY entries of this type exist
-                has_entries = any(
-                    e.artifact_type == artifact_type for e in manifest.entries
-                )
-                if has_entries:
-                    # If entries exist, at least one must be stable
-                    entry = self._stable_pointer.get_stable(artifact_type)
-                    if entry is None:
-                        raise RuntimeError(
-                            f"Active mode blocked: artifact type '{artifact_type}' "
-                            f"exists in manifest but all entries are stale"
-                        )
+            snapshot = self._stable_pointer.resolve_snapshot(required_types=required_types)
 
         from .retrieval_context_builder import RetrievalContextBuilder
-        builder = RetrievalContextBuilder(self._root)
+        builder = RetrievalContextBuilder(self._root, snapshot=snapshot)
         budget = _ROLE_BUDGETS.get(agent_role, 12000)
         request = RetrievalRequest(
             arc_id=arc_id,
@@ -143,8 +138,7 @@ class ContextProvider:
         if self._cache:
             manifest = self._stable_pointer._manifest.load() if self._stable_pointer else None
             gen_id = manifest.batch_generation_id if manifest else ""
-            cache_key = f"{agent_role}:{arc_id}:ch_{current_ch:03d}"
-            self._cache.put(cache_key, context, generation_id=gen_id)
+            self._cache.put(cache_key, {"context": context, "trace": trace}, generation_id=gen_id)
 
         return context, trace
 

@@ -30,19 +30,85 @@ def run_gate_test(test_name: str, project_root: Path) -> dict:
 
 
 def check_baseline_test_count(project_root: Path) -> dict:
-    """Check test baseline doc matches actual test count."""
+    """Check test baseline doc matches actual JUnit test count and commit binding."""
     import re
+    import xml.etree.ElementTree as ET
+
     baseline = project_root / "docs" / "phase2_test_baseline.generated.md"
     if not baseline.exists():
         return {"test": "baseline_doc_exists", "passed": False, "error": "baseline doc missing"}
 
     content = baseline.read_text(encoding="utf-8")
 
-    # Check commit is known (not "unknown")
-    if "unknown" in content.split("Base Commit")[1].split("\n")[0]:
-        return {"test": "baseline_commit_known", "passed": False, "error": "commit unknown"}
+    # Parse baseline commit (format: **Base Commit:** HASH)
+    commit_line = content.split("Base Commit")[1].split("\n")[0]
+    baseline_commit = commit_line.split(":")[-1].strip().strip("*").strip()
+    if not baseline_commit or "unknown" in baseline_commit:
+        return {"test": "baseline_commit_known", "passed": False, "error": f"commit unknown: {baseline_commit}"}
 
-    return {"test": "baseline_test_count", "passed": True}
+    # Parse baseline counts
+    baseline_counts = {}
+    for metric in ("Total", "Passed", "Failed", "Errors", "Skipped"):
+        match = re.search(rf"\|\s*{metric}\s*\|\s*(\d+)\s*\|", content)
+        if match:
+            baseline_counts[metric.lower()] = int(match.group(1))
+
+    # Parse JUnit XML
+    junit_path = project_root / "report.xml"
+    if not junit_path.exists():
+        return {"test": "junit_exists", "passed": False, "error": "report.xml missing"}
+
+    try:
+        tree = ET.parse(junit_path)
+        root_elem = tree.getroot()
+        if root_elem.tag == "testsuites":
+            suites = root_elem.findall("testsuite")
+        elif root_elem.tag == "testsuite":
+            suites = [root_elem]
+        else:
+            return {"test": "junit_parse", "passed": False, "error": f"unexpected root: {root_elem.tag}"}
+
+        junit_total = sum(int(s.get("tests", 0)) for s in suites)
+        junit_failures = sum(int(s.get("failures", 0)) for s in suites)
+        junit_errors = sum(int(s.get("errors", 0)) for s in suites)
+        junit_skipped = sum(int(s.get("skipped", 0)) for s in suites)
+        junit_passed = junit_total - junit_failures - junit_errors - junit_skipped
+    except Exception as e:
+        return {"test": "junit_parse", "passed": False, "error": str(e)}
+
+    # Verify counts match
+    errors = []
+    if baseline_counts.get("total") != junit_total:
+        errors.append(f"total mismatch: baseline={baseline_counts.get('total')} junit={junit_total}")
+    if baseline_counts.get("passed") != junit_passed:
+        errors.append(f"passed mismatch: baseline={baseline_counts.get('passed')} junit={junit_passed}")
+    if junit_failures != 0:
+        errors.append(f"junit has {junit_failures} failures")
+    if junit_errors != 0:
+        errors.append(f"junit has {junit_errors} errors")
+
+    # Verify baseline commit matches current HEAD
+    try:
+        head_result = subprocess.run(
+            ["git", "rev-parse", "--short", "HEAD"],
+            cwd=str(project_root), capture_output=True, text=True, timeout=5,
+        )
+        current_head = head_result.stdout.strip()
+        if baseline_commit != current_head:
+            errors.append(f"baseline commit {baseline_commit} != HEAD {current_head}")
+    except Exception:
+        pass  # non-fatal
+
+    if errors:
+        return {"test": "baseline_verification", "passed": False, "errors": errors}
+
+    return {
+        "test": "baseline_verification",
+        "passed": True,
+        "baseline_commit": baseline_commit,
+        "junit_total": junit_total,
+        "junit_passed": junit_passed,
+    }
 
 
 def main():

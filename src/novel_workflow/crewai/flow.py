@@ -223,12 +223,13 @@ def _run_revision_loop(
         for ch_id in current_rejected:
             ch_num = int(ch_id.split("_")[1])
             if provider:
+                _active = provider.is_active_mode()
                 writer_context, writer_trace = provider.build_writer_context(arc_id, ch_num)
                 if writer_trace:
-                    ContextProvider.write_trace(root, arc_id, ch_id, writer_trace)
+                    ContextProvider.write_trace(root, arc_id, ch_id, writer_trace, role="writer", active=_active)
                 auditor_context, auditor_trace = provider.build_auditor_context(arc_id, ch_num)
                 if auditor_trace:
-                    ContextProvider.write_trace(root, arc_id, ch_id, auditor_trace)
+                    ContextProvider.write_trace(root, arc_id, ch_id, auditor_trace, role="auditor", active=_active)
             else:
                 writer_context = _build_context(root, arc_id, ch_num)
                 auditor_context = writer_context
@@ -391,17 +392,18 @@ def run_novel_flow(
         print(f"\n[NovelFlow] === Chapter {ch_id} ===")
 
         # Build role-specific contexts
+        _active = provider.is_active_mode()
         writer_context, writer_trace = provider.build_writer_context(arc_id, ch_num)
         if writer_trace:
-            ContextProvider.write_trace(root, arc_id, ch_id, writer_trace)
+            ContextProvider.write_trace(root, arc_id, ch_id, writer_trace, role="writer", active=_active)
 
         auditor_context, auditor_trace = provider.build_auditor_context(arc_id, ch_num)
         if auditor_trace:
-            ContextProvider.write_trace(root, arc_id, ch_id, auditor_trace)
+            ContextProvider.write_trace(root, arc_id, ch_id, auditor_trace, role="auditor", active=_active)
 
         extractor_context, extractor_trace = provider.build_extractor_context(arc_id, ch_num)
         if extractor_trace:
-            ContextProvider.write_trace(root, arc_id, ch_id, extractor_trace)
+            ContextProvider.write_trace(root, arc_id, ch_id, extractor_trace, role="extractor", active=_active)
 
         # Writer
         writer_prompt = f"Write chapter {ch_id} of the story.\n\nStory context:\n{writer_context}\n\nWrite ONLY the chapter content in markdown format."
@@ -413,7 +415,7 @@ def run_novel_flow(
         draft_path = safe_write_draft(root, f"arcs/{arc_id}/drafts/{ch_id}.md", content)
         print(f"[NovelFlow] Draft saved to {draft_path}")
 
-        # Generate narrative summary (non-blocking)
+        # Generate narrative summary
         if provider.mode != "legacy":
             try:
                 from ..system_scripts.narrative_compressor import NarrativeCompressor
@@ -421,6 +423,8 @@ def run_novel_flow(
                 summary = compressor.compress(arc_id, ch_id)
                 print(f"[NovelFlow] Summary generated for {ch_id}")
             except Exception as e:
+                if _active:
+                    raise RuntimeError(f"Active mode: summary generation failed for {ch_id}: {e}") from e
                 print(f"[NovelFlow] WARNING: summary generation failed for {ch_id}: {e}")
 
         # Auditor

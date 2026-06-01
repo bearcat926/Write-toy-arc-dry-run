@@ -1,79 +1,84 @@
 {
   "schema_version": "PHASE3_ENTRY_GATE_V1",
-  "generated_at": "2026-06-01T07:34:19.460630+00:00",
-  "final_status": "PASS",
+  "generated_at": "2026-06-01T09:28:33.496215+00:00",
+  "final_status": "FAIL",
   "gates_passed": 13,
   "gates_total": 13,
-  "blocking_failures": [],
+  "blocking_failures": [
+    "baseline_test_count"
+  ],
   "gate_results": [
     {
       "test": "test_gate1_generation_lifecycle",
       "passed": true,
-      "output": "-4.5.2\ncollecting ... collected 1 item\n\ntests/test_phase3_entry_gate.py::test_gate1_generation_lifecycle PASSED  [100%]\n\n============================== 1 passed in 0.25s =============================="
+      "output": "-4.5.2\ncollecting ... collected 1 item\n\ntests/test_phase3_entry_gate.py::test_gate1_generation_lifecycle PASSED  [100%]\n\n============================== 1 passed in 0.19s =============================="
     },
     {
       "test": "test_gate2_builder_auto_register",
       "passed": true,
-      "output": "-4.5.2\ncollecting ... collected 1 item\n\ntests/test_phase3_entry_gate.py::test_gate2_builder_auto_register PASSED [100%]\n\n============================== 1 passed in 0.25s =============================="
+      "output": "-4.5.2\ncollecting ... collected 1 item\n\ntests/test_phase3_entry_gate.py::test_gate2_builder_auto_register PASSED [100%]\n\n============================== 1 passed in 0.17s =============================="
     },
     {
       "test": "test_gate3_retrieval_validator",
       "passed": true,
-      "output": "-4.5.2\ncollecting ... collected 1 item\n\ntests/test_phase3_entry_gate.py::test_gate3_retrieval_validator PASSED   [100%]\n\n============================== 1 passed in 0.24s =============================="
+      "output": "-4.5.2\ncollecting ... collected 1 item\n\ntests/test_phase3_entry_gate.py::test_gate3_retrieval_validator PASSED   [100%]\n\n============================== 1 passed in 0.19s =============================="
     },
     {
       "test": "test_gate4_rebuild_orchestrator",
       "passed": true,
-      "output": "-4.5.2\ncollecting ... collected 1 item\n\ntests/test_phase3_entry_gate.py::test_gate4_rebuild_orchestrator PASSED  [100%]\n\n============================== 1 passed in 0.24s =============================="
+      "output": "-4.5.2\ncollecting ... collected 1 item\n\ntests/test_phase3_entry_gate.py::test_gate4_rebuild_orchestrator PASSED  [100%]\n\n============================== 1 passed in 0.19s =============================="
     },
     {
       "test": "test_gate5_independent_profiles",
       "passed": true,
-      "output": "-4.5.2\ncollecting ... collected 1 item\n\ntests/test_phase3_entry_gate.py::test_gate5_independent_profiles PASSED  [100%]\n\n============================== 1 passed in 0.20s =============================="
+      "output": "-4.5.2\ncollecting ... collected 1 item\n\ntests/test_phase3_entry_gate.py::test_gate5_independent_profiles PASSED  [100%]\n\n============================== 1 passed in 0.17s =============================="
     },
     {
       "test": "test_gate6_retrieval_active_mode",
       "passed": true,
-      "output": "-4.5.2\ncollecting ... collected 1 item\n\ntests/test_phase3_entry_gate.py::test_gate6_retrieval_active_mode PASSED [100%]\n\n============================== 1 passed in 0.21s =============================="
+      "output": "-4.5.2\ncollecting ... collected 1 item\n\ntests/test_phase3_entry_gate.py::test_gate6_retrieval_active_mode PASSED [100%]\n\n============================== 1 passed in 0.17s =============================="
     },
     {
       "test": "test_gate7_arc_active_validator",
       "passed": true,
-      "output": "-4.5.2\ncollecting ... collected 1 item\n\ntests/test_phase3_entry_gate.py::test_gate7_arc_active_validator PASSED  [100%]\n\n============================== 1 passed in 0.21s =============================="
+      "output": "-4.5.2\ncollecting ... collected 1 item\n\ntests/test_phase3_entry_gate.py::test_gate7_arc_active_validator PASSED  [100%]\n\n============================== 1 passed in 0.17s =============================="
     },
     {
       "test": "test_gate8_30_chapter_stress",
       "passed": true,
-      "output": "-4.5.2\ncollecting ... collected 1 item\n\ntests/test_phase3_entry_gate.py::test_gate8_30_chapter_stress PASSED     [100%]\n\n============================== 1 passed in 0.22s =============================="
+      "output": "-4.5.2\ncollecting ... collected 1 item\n\ntests/test_phase3_entry_gate.py::test_gate8_30_chapter_stress PASSED     [100%]\n\n============================== 1 passed in 0.17s =============================="
     },
     {
       "test": "test_gate9_performance_hard_gate",
       "passed": true,
-      "output": "-4.5.2\ncollecting ... collected 1 item\n\ntests/test_phase3_entry_gate.py::test_gate9_performance_hard_gate PASSED [100%]\n\n============================== 1 passed in 0.20s =============================="
+      "output": "-4.5.2\ncollecting ... collected 1 item\n\ntests/test_phase3_entry_gate.py::test_gate9_performance_hard_gate PASSED [100%]\n\n============================== 1 passed in 0.17s =============================="
     },
     {
       "test": "test_gate10_structured_auditor",
       "passed": true,
-      "output": "-4.5.2\ncollecting ... collected 1 item\n\ntests/test_phase3_entry_gate.py::test_gate10_structured_auditor PASSED   [100%]\n\n============================== 1 passed in 0.21s =============================="
+      "output": "-4.5.2\ncollecting ... collected 1 item\n\ntests/test_phase3_entry_gate.py::test_gate10_structured_auditor PASSED   [100%]\n\n============================== 1 passed in 0.17s =============================="
     },
     {
       "test": "test_gate11_drift_streak",
       "passed": true,
-      "output": "-4.5.2\ncollecting ... collected 1 item\n\ntests/test_phase3_entry_gate.py::test_gate11_drift_streak PASSED         [100%]\n\n============================== 1 passed in 0.21s =============================="
+      "output": "-4.5.2\ncollecting ... collected 1 item\n\ntests/test_phase3_entry_gate.py::test_gate11_drift_streak PASSED         [100%]\n\n============================== 1 passed in 0.17s =============================="
     },
     {
       "test": "test_gate12_drift_gold_dataset",
       "passed": true,
-      "output": "-4.5.2\ncollecting ... collected 1 item\n\ntests/test_phase3_entry_gate.py::test_gate12_drift_gold_dataset PASSED   [100%]\n\n============================== 1 passed in 0.19s =============================="
+      "output": "-4.5.2\ncollecting ... collected 1 item\n\ntests/test_phase3_entry_gate.py::test_gate12_drift_gold_dataset PASSED   [100%]\n\n============================== 1 passed in 0.16s =============================="
     },
     {
       "test": "test_gate13_change_gate_exists",
       "passed": true,
-      "output": "-4.5.2\ncollecting ... collected 1 item\n\ntests/test_phase3_entry_gate.py::test_gate13_change_gate_exists PASSED   [100%]\n\n============================== 1 passed in 0.21s =============================="
+      "output": "-4.5.2\ncollecting ... collected 1 item\n\ntests/test_phase3_entry_gate.py::test_gate13_change_gate_exists PASSED   [100%]\n\n============================== 1 passed in 0.16s =============================="
     }
   ],
   "baseline_check": {
-    "test": "baseline_test_count",
-    "passed": true
+    "test": "baseline_verification",
+    "passed": false,
+    "errors": [
+      "baseline commit ** 1d95fd4 != HEAD 1d95fd4"
+    ]
   }
 }

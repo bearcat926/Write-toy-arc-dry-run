@@ -70,7 +70,10 @@ def test_active_mode_caches_context(tmp_path: Path):
     provider.build_writer_context("arc_001", 1)
     cached = provider.cache.get("writer:arc_001:ch_001")
     assert cached is not None
-    assert isinstance(cached, str)
+    assert isinstance(cached, dict)
+    assert "context" in cached
+    assert "trace" in cached
+    assert isinstance(cached["context"], str)
 
 
 def test_cache_invalidation(tmp_path: Path):

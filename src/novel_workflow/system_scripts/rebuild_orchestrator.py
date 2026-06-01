@@ -14,6 +14,25 @@ from ..schemas.manifest import DerivedArtifactEntry
 from ..schemas.runtime_modes import RuntimeModes
 
 
+def resolve_planning_horizon(root: Path, arc_id: str, chapter_id: str | None = None) -> int:
+    """Determine planning horizon from existing drafts.
+
+    Returns max(existing_draft_count, 10) to ensure minimum planning depth.
+    If chapter_id is beyond the horizon, extends to chapter number.
+    """
+    drafts_dir = root / "arcs" / arc_id / "drafts"
+    existing = len(list(drafts_dir.glob("ch_*.md"))) if drafts_dir.exists() else 0
+    horizon = max(existing, 10)
+    # If target chapter is beyond horizon, extend
+    if chapter_id and "_" in chapter_id:
+        try:
+            ch_num = int(chapter_id.split("_")[1])
+            horizon = max(horizon, ch_num)
+        except (ValueError, IndexError):
+            pass
+    return horizon
+
+
 @dataclass
 class ArtifactWriteResult:
     success: bool
@@ -117,17 +136,8 @@ class LifecycleRebuildAdapter:
         try:
             from .foreshadow_lifecycle_manager import ForeshadowLifecycleManager
             manager = ForeshadowLifecycleManager(self._root)
+            # write_index() handles build + file write + manifest registration
             index, _transitions = manager.write_index(arc_id)
-            manifest = ManifestManager(self._root)
-            manifest.load()
-            manifest.register_persisted_artifact(DerivedArtifactEntry(
-                artifact_path="workspace/foreshadow_lifecycle_index.json",
-                artifact_type="foreshadow_lifecycle_index",
-                builder_name="ForeshadowLifecycleManager",
-                source_artifacts=[f"ledgers/foreshadowing.json"],
-                required=True,
-            ))
-            manifest.save()
             return [ArtifactWriteResult(success=True, artifact_path="workspace/foreshadow_lifecycle_index.json")]
         except Exception as e:
             return [ArtifactWriteResult(success=False, artifact_path="workspace/foreshadow_lifecycle_index.json", error=str(e))]
@@ -201,13 +211,7 @@ class ArcPlanRebuildAdapter:
         try:
             from .arc_planning_engine import ArcPlanningEngine
             engine = ArcPlanningEngine(self._root)
-            # Determine chapter count from existing drafts
-            drafts_dir = self._root / "arcs" / arc_id / "drafts"
-            if drafts_dir.exists():
-                chapter_count = len(list(drafts_dir.glob("ch_*.md")))
-            else:
-                chapter_count = 10  # fallback default
-            chapter_count = max(chapter_count, 10)  # ensure minimum planning horizon
+            chapter_count = resolve_planning_horizon(self._root, arc_id, chapter_id)
             arc_plan, beat_plans, health_report = engine.plan_arc(arc_id, chapter_count=chapter_count)
             plan_dir = self._root / "workspace" / "arc_plan" / arc_id
             plan_dir.mkdir(parents=True, exist_ok=True)
@@ -248,7 +252,8 @@ class BeatPlanRebuildAdapter:
         try:
             from .arc_planning_engine import ArcPlanningEngine
             engine = ArcPlanningEngine(self._root)
-            _, beat_plans, _ = engine.plan_arc(arc_id, chapter_count=10)
+            chapter_count = resolve_planning_horizon(self._root, arc_id, chapter_id)
+            _, beat_plans, _ = engine.plan_arc(arc_id, chapter_count=chapter_count)
             # Find the beat plan for this chapter
             target_beat = None
             for bp in beat_plans:
@@ -291,9 +296,18 @@ class TraceRebuildAdapter:
         try:
             from .context_provider import ContextProvider
             provider = ContextProvider(self._root, mode="retrieval_active")
+            _active = provider.is_active_mode()
             _, trace = provider.build_writer_context(arc_id, int(chapter_id.split("_")[1]) if "_" in chapter_id else 1)
             if trace:
-                ContextProvider.write_trace(self._root, arc_id, chapter_id, trace)
+                ok = ContextProvider.write_trace(
+                    self._root, arc_id, chapter_id, trace, role="writer", active=_active,
+                )
+                if not ok:
+                    return [ArtifactWriteResult(
+                        success=False,
+                        artifact_path=f"workspace/retrieval_traces/{arc_id}/{chapter_id}/writer.jsonl",
+                        error="trace write returned False",
+                    )]
             return [ArtifactWriteResult(success=True, artifact_path=f"workspace/retrieval_traces/{arc_id}/{chapter_id}/writer.jsonl")]
         except Exception as e:
             return [ArtifactWriteResult(success=False, artifact_path=f"trace:{chapter_id}", error=str(e))]
