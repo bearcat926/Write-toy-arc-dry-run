@@ -22,8 +22,9 @@ from ..schemas.hash_utils import canonical_sha256_file
 class RetrievalContextBuilder:
     """Selects relevant context items for Writer/Auditor/Extractor roles."""
 
-    def __init__(self, root: Path):
+    def __init__(self, root: Path, snapshot=None):
         self._root = root
+        self._snapshot = snapshot  # StableSnapshot for active mode reads
 
     def build(self, request: RetrievalRequest) -> tuple[str, RetrievalTrace]:
         """Build context string and retrieval trace.
@@ -113,9 +114,12 @@ class RetrievalContextBuilder:
                 except (json.JSONDecodeError, KeyError):
                     continue
 
-        # 4. Narrative graph index (if available)
-        graph_path = self._root / "workspace" / "narrative_graph_index.json"
-        if graph_path.exists():
+        # 4. Narrative graph index (via snapshot or fixed path)
+        if self._snapshot and self._snapshot.has("narrative_graph_index"):
+            graph_path = self._snapshot.get_path("narrative_graph_index")
+        else:
+            graph_path = self._root / "workspace" / "narrative_graph_index.json"
+        if graph_path and graph_path.exists():
             try:
                 data = json.loads(graph_path.read_text(encoding="utf-8"))
                 nodes = data.get("nodes", [])
@@ -155,9 +159,12 @@ class RetrievalContextBuilder:
             except (json.JSONDecodeError, KeyError):
                 pass
 
-        # 5. Foreshadow lifecycle index (if available)
-        lifecycle_path = self._root / "workspace" / "foreshadow_lifecycle_index.json"
-        if lifecycle_path.exists():
+        # 5. Foreshadow lifecycle index (via snapshot or fixed path)
+        if self._snapshot and self._snapshot.has("foreshadow_lifecycle_index"):
+            lifecycle_path = self._snapshot.get_path("foreshadow_lifecycle_index")
+        else:
+            lifecycle_path = self._root / "workspace" / "foreshadow_lifecycle_index.json"
+        if lifecycle_path and lifecycle_path.exists():
             try:
                 data = json.loads(lifecycle_path.read_text(encoding="utf-8"))
                 items_data = data.get("items", [])
