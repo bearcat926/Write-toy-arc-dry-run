@@ -2,6 +2,8 @@ import hashlib
 import json
 import shutil
 from pathlib import Path
+from typing import TYPE_CHECKING
+
 from ..config import FORESHADOW_TRANSITIONS, LEDGER_OPERATIONS, SUPPORTED_SCHEMA_VERSIONS
 from ..schemas.gate import GateRecord
 from ..schemas.diff import LedgerDiff, CanonDiff, ApplyRecord
@@ -12,6 +14,10 @@ from ..validators.error_codes import APPLY_DERIVED_SOURCE_REJECTED, APPLY_MISSIN
 from ..guards.lock_manager import LockManager
 from ..guards.path_safety import PathSafetyGuard
 from .canonicalizer import Canonicalizer
+
+if TYPE_CHECKING:
+    from ..schemas.chapter_commit import ChapterCommitStore, ChapterCommitEvent
+    from .projection_registry import ProjectionRegistry
 
 CONSUMED_FILE = "consumed_hashes.json"
 
@@ -25,6 +31,22 @@ class AtomicApplyManager:
         self._consumed: set[str] = self._load_consumed()
         self._lock_manager = LockManager()
         self._guard = PathSafetyGuard(project_root)
+        self._commit_store = None
+        self._projection_registry = None
+
+    def enable_chapter_commit(
+        self,
+        commit_store: "ChapterCommitStore",
+        projection_registry: "ProjectionRegistry | None" = None,
+    ) -> None:
+        """Enable ChapterCommit event emission after successful apply.
+
+        Args:
+            commit_store: The ChapterCommitStore to persist events.
+            projection_registry: Optional ProjectionRegistry to dispatch projections.
+        """
+        self._commit_store = commit_store
+        self._projection_registry = projection_registry
 
     def _load_consumed(self) -> set[str]:
         """Load consumed hashes from persistent storage."""
@@ -199,6 +221,13 @@ class AtomicApplyManager:
                         record_path.unlink()
                     raise
 
+                # 13. Emit ChapterCommit event (Phase 3 C-02)
+                self._emit_chapter_commit(
+                    arc_id=arc_id,
+                    ledger_diff_hash=diff_hash,
+                    trace_id=getattr(gate_record, "trace_id", "") or f"trc_{diff_hash[:8]}",
+                )
+
                 return {"result": "success", "diff_hash": diff_hash}
 
             except Exception:
@@ -245,3 +274,63 @@ class AtomicApplyManager:
             target = self._root / "canon" / "characters" / "character_mind_cards" / f"{update['character_id']}.json"
             target.parent.mkdir(parents=True, exist_ok=True)
             target.write_text(json.dumps(update, indent=2, ensure_ascii=False))
+
+    def _emit_chapter_commit(
+        self,
+        arc_id: str,
+        ledger_diff_hash: str,
+        trace_id: str = "",
+    ) -> None:
+        """Emit a ChapterCommitEvent after successful apply (Phase 3 C-02).
+
+        This is an optional hook — if commit_store is not configured, it's a no-op.
+        Commit emission failure does NOT rollback the apply.
+        """
+        if self._commit_store is None:
+            return
+
+        try:
+            from ..schemas.chapter_commit import ChapterCommitEvent
+
+            # Determine chapter_id from the arc's last chapter
+            chapter_id = self._resolve_chapter_id(arc_id)
+
+            event = ChapterCommitEvent.create(
+                chapter_id=chapter_id,
+                arc_id=arc_id,
+                ledger_diff_hash=ledger_diff_hash,
+                trace_id=trace_id,
+                canon_hash="",
+            )
+
+            # Persist to commit log
+            self._commit_store.append(event)
+
+            # Dispatch to projections if registry is configured
+            if self._projection_registry is not None:
+                self._projection_registry.dispatch(event)
+
+        except Exception:
+            # Commit emission failure is non-fatal: do not rollback apply
+            pass
+
+    def _resolve_chapter_id(self, arc_id: str) -> str:
+        """Resolve the next chapter_id for an arc.
+
+        Counts existing chapters in canon/manuscript to determine the next id.
+        """
+        manuscript_dir = self._root / "canon" / "manuscript"
+        if not manuscript_dir.exists():
+            return "ch_001"
+
+        chapters = sorted(manuscript_dir.glob("ch_*.md"))
+        if not chapters:
+            return "ch_001"
+
+        # Extract numeric part from last chapter
+        last = chapters[-1].stem  # e.g., "ch_003"
+        try:
+            num = int(last.split("_")[-1])
+            return f"ch_{num:03d}"
+        except (ValueError, IndexError):
+            return "ch_001"
