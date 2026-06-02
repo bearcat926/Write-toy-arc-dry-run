@@ -1,7 +1,6 @@
 import pytest
 from pathlib import Path
 from novel_workflow.guards.path_safety import PathSafetyGuard, PathSafetyError
-from tests.helpers import requires_symlink
 
 
 @pytest.fixture
@@ -129,7 +128,6 @@ def test_system_script_known_types_succeed_unknown_rejected(guard: PathSafetyGua
         guard.check_write_path("workspace/some_file.txt", "system_script", artifact_type="bogus_type")
 
 
-@requires_symlink
 def test_intermediate_symlink_rejected_by_guard(project_root: Path):
     """PathSafetyGuard must reject paths with symlinked intermediate directories."""
     import os

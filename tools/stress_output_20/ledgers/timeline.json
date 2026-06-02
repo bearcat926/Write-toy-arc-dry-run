@@ -1,0 +1,125 @@
+{
+  "schema_version": "1.0",
+  "events": [
+    {
+      "event_id": "evt_stress_ch_001",
+      "event_type": "chapter_written",
+      "chapter": "ch_001",
+      "description": "Stress test chapter 1/20"
+    },
+    {
+      "event_id": "evt_stress_ch_002",
+      "event_type": "chapter_written",
+      "chapter": "ch_002",
+      "description": "Stress test chapter 2/20"
+    },
+    {
+      "event_id": "evt_stress_ch_003",
+      "event_type": "chapter_written",
+      "chapter": "ch_003",
+      "description": "Stress test chapter 3/20"
+    },
+    {
+      "event_id": "evt_stress_ch_004",
+      "event_type": "chapter_written",
+      "chapter": "ch_004",
+      "description": "Stress test chapter 4/20"
+    },
+    {
+      "event_id": "evt_stress_ch_005",
+      "event_type": "chapter_written",
+      "chapter": "ch_005",
+      "description": "Stress test chapter 5/20"
+    },
+    {
+      "event_id": "evt_stress_ch_006",
+      "event_type": "chapter_written",
+      "chapter": "ch_006",
+      "description": "Stress test chapter 6/20"
+    },
+    {
+      "event_id": "evt_stress_ch_007",
+      "event_type": "chapter_written",
+      "chapter": "ch_007",
+      "description": "Stress test chapter 7/20"
+    },
+    {
+      "event_id": "evt_stress_ch_008",
+      "event_type": "chapter_written",
+      "chapter": "ch_008",
+      "description": "Stress test chapter 8/20"
+    },
+    {
+      "event_id": "evt_stress_ch_009",
+      "event_type": "chapter_written",
+      "chapter": "ch_009",
+      "description": "Stress test chapter 9/20"
+    },
+    {
+      "event_id": "evt_stress_ch_010",
+      "event_type": "chapter_written",
+      "chapter": "ch_010",
+      "description": "Stress test chapter 10/20"
+    },
+    {
+      "event_id": "evt_stress_ch_011",
+      "event_type": "chapter_written",
+      "chapter": "ch_011",
+      "description": "Stress test chapter 11/20"
+    },
+    {
+      "event_id": "evt_stress_ch_012",
+      "event_type": "chapter_written",
+      "chapter": "ch_012",
+      "description": "Stress test chapter 12/20"
+    },
+    {
+      "event_id": "evt_stress_ch_013",
+      "event_type": "chapter_written",
+      "chapter": "ch_013",
+      "description": "Stress test chapter 13/20"
+    },
+    {
+      "event_id": "evt_stress_ch_014",
+      "event_type": "chapter_written",
+      "chapter": "ch_014",
+      "description": "Stress test chapter 14/20"
+    },
+    {
+      "event_id": "evt_stress_ch_015",
+      "event_type": "chapter_written",
+      "chapter": "ch_015",
+      "description": "Stress test chapter 15/20"
+    },
+    {
+      "event_id": "evt_stress_ch_016",
+      "event_type": "chapter_written",
+      "chapter": "ch_016",
+      "description": "Stress test chapter 16/20"
+    },
+    {
+      "event_id": "evt_stress_ch_017",
+      "event_type": "chapter_written",
+      "chapter": "ch_017",
+      "description": "Stress test chapter 17/20"
+    },
+    {
+      "event_id": "evt_stress_ch_018",
+      "event_type": "chapter_written",
+      "chapter": "ch_018",
+      "description": "Stress test chapter 18/20"
+    },
+    {
+      "event_id": "evt_stress_ch_019",
+      "event_type": "chapter_written",
+      "chapter": "ch_019",
+      "description": "Stress test chapter 19/20"
+    },
+    {
+      "event_id": "evt_stress_ch_020",
+      "event_type": "chapter_written",
+      "chapter": "ch_020",
+      "description": "Stress test chapter 20/20"
+    }
+  ]
+}

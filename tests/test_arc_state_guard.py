@@ -6,7 +6,6 @@ from pathlib import Path
 from novel_workflow.system_scripts.arc_state_manager import ArcWorkingStateManager
 from novel_workflow.schemas.proposal import LedgerUpdateProposal
 from novel_workflow.guards.path_safety import PathSafetyError
-from tests.helpers import requires_symlink
 
 
 def test_arc_state_manager_initialize_uses_guard(project_root: Path):
@@ -35,7 +34,6 @@ def test_arc_state_manager_save_uses_guard(project_root: Path):
     assert len(aws["entries"]) == 1
 
 
-@requires_symlink
 def test_arc_state_manager_symlink_escape_rejected(project_root: Path):
     """P1.2: If arc_working_state.json is a symlink escaping workspace, guard rejects."""
     # Create a symlink that escapes workspace

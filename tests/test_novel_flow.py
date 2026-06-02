@@ -1,16 +1,5 @@
-import os
 import pytest
 from pathlib import Path
-
-
-def _setup_llm_env(monkeypatch):
-    """Set up LLM environment from config file (never logged)."""
-    key_file = Path("C:/Users/18622/Desktop/key.txt")
-    if key_file.exists():
-        for line in key_file.read_text().strip().split("\n"):
-            if "=" in line:
-                k, v = line.split("=", 1)
-                monkeypatch.setenv(k.strip(), v.strip())
 
 
 def test_crewai_import():
@@ -26,12 +15,13 @@ def test_flow_import():
 
 
 def test_agents_import(monkeypatch):
-    """Verify agent factory functions work (requires LLM config)."""
-    _setup_llm_env(monkeypatch)
-
-    # Check if LLM config was actually loaded
-    if not os.environ.get("OPENAI_API_KEY"):
-        pytest.skip("OPENAI_API_KEY not available — agent creation requires LLM config")
+    """Verify agent factory functions work (LLM config from key.txt)."""
+    # Config auto-loads from key.txt; set temp env vars from config
+    from novel_workflow.crewai.config import LLM_MODEL, LLM_BASE_URL, LLM_API_KEY
+    if LLM_API_KEY:
+        monkeypatch.setenv("OPENAI_API_KEY", LLM_API_KEY)
+        monkeypatch.setenv("OPENAI_MODEL_NAME", LLM_MODEL)
+        monkeypatch.setenv("OPENAI_API_BASE", LLM_BASE_URL)
 
     from novel_workflow.crewai.agents import create_writer, create_auditor, create_extractor
 
@@ -43,7 +33,7 @@ def test_agents_import(monkeypatch):
         assert auditor.role == "Continuity Auditor"
         assert extractor.role == "Knowledge Extractor"
     except ImportError as e:
-        pytest.skip(f"Agent creation requires LLM config: {e}")
+        pytest.skip(f"LLM initialization failed: {e}")
 
 
 def test_context_order_aws_before_canon(project_root: Path):

@@ -12,7 +12,6 @@ from novel_workflow.validators.error_codes import (
     SYMLINK_DERIVED_PATH_REJECTED,
     DERIVED_PATH_OUTSIDE_WORKSPACE,
 )
-from tests.helpers import requires_symlink
 
 
 def test_prefix_collision_not_escaped(tmp_path: Path):
@@ -31,7 +30,6 @@ def test_relative_to_escape_rejected(tmp_path: Path):
         resolve_under_root(tmp_path, "workspace/../../../etc/passwd")
 
 
-@requires_symlink
 def test_parent_symlink_rejected(tmp_path: Path):
     """workspace directory itself being a symlink must be rejected."""
     real_dir = tmp_path / "real_workspace"
@@ -46,7 +44,6 @@ def test_parent_symlink_rejected(tmp_path: Path):
             assert_safe_derived_path(tmp_path, "workspace/summaries/ch_001.json")
 
 
-@requires_symlink
 def test_intermediate_dir_symlink_rejected(tmp_path: Path):
     """A symlink at any intermediate directory level must be rejected."""
     real_summaries = tmp_path / "real_summaries"

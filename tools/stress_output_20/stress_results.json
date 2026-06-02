@@ -1,0 +1,119 @@
+{
+  "total_chapters": 20,
+  "chapters": [
+    {
+      "chapter_id": "ch_001",
+      "status": "success",
+      "diff_hash": "abc7aa03aab03d63a305baeed1d5f9287d910ab137c4a019fb62558c7351f639"
+    },
+    {
+      "chapter_id": "ch_002",
+      "status": "success",
+      "diff_hash": "486cc08cdf10ff7c5663dce8396e4b3aeda02e30fb9640f4916dc6b1b54f3fdb"
+    },
+    {
+      "chapter_id": "ch_003",
+      "status": "success",
+      "diff_hash": "ad72dd5b17b786c4b21767b5f8a05c653d80e2dc7e5897f7ee43e36f2aa4360c"
+    },
+    {
+      "chapter_id": "ch_004",
+      "status": "success",
+      "diff_hash": "06d3390fe3341ade99a532ba5466118e9e40d2433357fe923c3f560424d2d863"
+    },
+    {
+      "chapter_id": "ch_005",
+      "status": "success",
+      "diff_hash": "4a2664ff67009d94d0f021b569398b0c64d71f5a3721c8db4ba12f7c90c8a248"
+    },
+    {
+      "chapter_id": "ch_006",
+      "status": "success",
+      "diff_hash": "b128e1cbd3dbf69a4448f2ce83dcbb96e6eb83d2dd3d4f7b4edc2d8ce099bb00"
+    },
+    {
+      "chapter_id": "ch_007",
+      "status": "success",
+      "diff_hash": "6449195943d205e50a4c394c1e8294ac1a6142be8b2585a09327938a1c85887e"
+    },
+    {
+      "chapter_id": "ch_008",
+      "status": "success",
+      "diff_hash": "fd4259a4ab6d65413fe80ca25a50f30262ccd01d97f686a163207746d8853076"
+    },
+    {
+      "chapter_id": "ch_009",
+      "status": "success",
+      "diff_hash": "957dbcc3ed5a2cf5d9601977ad17b74114389fd50cd6347aa9952e394378c9c1"
+    },
+    {
+      "chapter_id": "ch_010",
+      "status": "success",
+      "diff_hash": "13eb807ce1d6a6c0cf8040ae80544815fa4e6339c4b9a62338f44f7ecf063fda"
+    },
+    {
+      "chapter_id": "ch_011",
+      "status": "success",
+      "diff_hash": "78dbe0df0a2397b376c246988f4e722f15b18b79ad94878b8dddab74b80e219a"
+    },
+    {
+      "chapter_id": "ch_012",
+      "status": "success",
+      "diff_hash": "66dcb3b0b38e94fdf96491ebfe564c28828078572bc1d142ba0da30d9d4f1940"
+    },
+    {
+      "chapter_id": "ch_013",
+      "status": "success",
+      "diff_hash": "8367d00209a909d5fe185593e3b1d81f38a76e3c9752c7f83208fbf9c3f8fd16"
+    },
+    {
+      "chapter_id": "ch_014",
+      "status": "success",
+      "diff_hash": "2e7460f92a54a5d06ed22b5dbee564b8a6dffc578b2213f339ae80200304a68b"
+    },
+    {
+      "chapter_id": "ch_015",
+      "status": "success",
+      "diff_hash": "5a6d61d7e30428e8dd98c2a6299d78fc99b00554d8613cdad49ae72b615639b5"
+    },
+    {
+      "chapter_id": "ch_016",
+      "status": "success",
+      "diff_hash": "c78acaa46221f06cbb48f13871692ced32568fcb33adb6673fa36d6f2cba07ef"
+    },
+    {
+      "chapter_id": "ch_017",
+      "status": "success",
+      "diff_hash": "5c85e0ecbd80385af54578ebea203bd0115efb95e03fe48d62f64c4a4c9a185c"
+    },
+    {
+      "chapter_id": "ch_018",
+      "status": "success",
+      "diff_hash": "cc7987b74628fd4345a116a1f91bff275b00d970c10cf9e65ecc3fb11e4f9be8"
+    },
+    {
+      "chapter_id": "ch_019",
+      "status": "success",
+      "diff_hash": "5b6c21fb473ded778a986d6196929798e64c177e617ef849ed51f77f825dd999"
+    },
+    {
+      "chapter_id": "ch_020",
+      "status": "success",
+      "diff_hash": "6b2831881a7b36450655553538ef88a8e97ff9a6bffaaddb1f8cc0646271afeb"
+    }
+  ],
+  "setup_ms": 11,
+  "apply_ms": 249,
+  "replay_ms": 2,
+  "rollback_ms": 0,
+  "errors": [],
+  "apply_errors": 0,
+  "commit_count": 20,
+  "manuscript_count": 20,
+  "snapshot_count": 20,
+  "worker_recovery_tested": true,
+  "idempotency_checks": 5,
+  "bm25_results": 0,
+  "total_ms": 508,
+  "passed": true
+}
