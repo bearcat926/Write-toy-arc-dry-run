@@ -11,9 +11,11 @@ from novel_workflow.system_scripts.atomic_apply_manager import AtomicApplyManage
 from novel_workflow.schemas.gate import GateRecord
 from novel_workflow.schemas.diff import LedgerDiff
 from novel_workflow.schemas.progress import ProgressEntry
+from tests.helpers import requires_symlink
 
 
 # --- P1.10: Symlink escape rejected by PathSafetyGuard ---
+@requires_symlink
 def test_symlink_escape_rejected(project_root: Path):
     """PathSafetyGuard must reject symlinks that escape workspace."""
     guard = PathSafetyGuard(project_root)
@@ -28,6 +30,7 @@ def test_symlink_escape_rejected(project_root: Path):
 
 
 # --- P1.11: TOCTOU symlink race ---
+@requires_symlink
 def test_toctou_symlink_race_rejected(project_root: Path):
     """Guard check + write must reject if symlink target is replaced between check and write."""
     guard = PathSafetyGuard(project_root)

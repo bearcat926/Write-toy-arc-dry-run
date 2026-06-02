@@ -14,6 +14,7 @@ from novel_workflow.validators.error_codes import (
     SYMLINK_DERIVED_PATH_REJECTED,
     PATH_ESCAPE_REJECTED,
 )
+from tests.helpers import requires_symlink
 
 
 def test_is_derived_artifact():
@@ -58,6 +59,7 @@ def test_assert_safe_derived_path_rejects_non_workspace(tmp_path: Path):
         assert_safe_derived_path(tmp_path, "canon/test.md")
 
 
+@requires_symlink
 def test_symlink_derived_rejected(tmp_path: Path):
     """Symlinked derived artifacts must be rejected."""
     (tmp_path / "workspace" / "summaries").mkdir(parents=True)
@@ -71,6 +73,7 @@ def test_symlink_derived_rejected(tmp_path: Path):
             assert_safe_derived_path(tmp_path, "workspace/summaries/ch_001_summary.json")
 
 
+@requires_symlink
 def test_symlink_to_outside_rejected(tmp_path: Path):
     """Symlink pointing outside root must be rejected."""
     outside = tmp_path.parent / "outside.json"

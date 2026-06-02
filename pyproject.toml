@@ -18,3 +18,7 @@ dev = [
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+markers = [
+    "requires_symlink: tests that require symlink creation (admin on Windows)",
+    "requires_crewai: tests that require the crewai package",
+]

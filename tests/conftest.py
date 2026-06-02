@@ -1,5 +1,43 @@
+import os
+import sys
 import pytest
 from pathlib import Path
+
+
+def _can_create_symlink() -> bool:
+    """Check if we can create real symlinks (requires admin on Windows)."""
+    import tempfile
+    try:
+        with tempfile.TemporaryDirectory() as d:
+            src = os.path.join(d, 'src')
+            dst = os.path.join(d, 'dst')
+            with open(src, 'w') as f:
+                f.write('test')
+            os.symlink(src, dst)
+            return True
+    except (OSError, PermissionError, NotImplementedError):
+        return False
+
+
+def _has_crewai() -> bool:
+    """Check if crewai package is importable."""
+    try:
+        import crewai  # noqa: F401
+        return True
+    except ImportError:
+        return False
+
+
+# Register custom markers
+requires_symlink = pytest.mark.skipif(
+    not _can_create_symlink(),
+    reason="Symlink creation requires admin privileges on Windows",
+)
+
+requires_crewai = pytest.mark.skipif(
+    not _has_crewai(),
+    reason="crewai package not installed",
+)
 
 
 @pytest.fixture
