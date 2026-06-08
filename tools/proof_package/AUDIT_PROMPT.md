@@ -13,7 +13,7 @@
 ## 材料来源
 
 **GitHub 源码仓库**: `https://github.com/bearcat926/Write-toy-arc-dry-run`  
-**审计基线提交**: `7cfd9d4` (main)  
+**审计基线提交**: `8f4137f` (main)  
 **⚠ 不要访问远程仓库**。所有证明文件已打包在 `proof_package.zip` 中。远程仓库仅用于溯源参考。
 
 ---
