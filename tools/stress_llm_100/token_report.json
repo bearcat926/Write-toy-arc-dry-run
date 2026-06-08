@@ -1,0 +1,801 @@
+{
+  "model": "mimo-v2.5-pro",
+  "total_chapters": 99,
+  "total_tokens_in": 64770,
+  "total_tokens_out": 79200,
+  "total_tokens": 143970,
+  "per_chapter": [
+    {
+      "chapter": 1,
+      "tokens_in": 225,
+      "tokens_out": 800,
+      "context_tokens": 209,
+      "content_length": 2549,
+      "latency_ms": 30043
+    },
+    {
+      "chapter": 2,
+      "tokens_in": 318,
+      "tokens_out": 800,
+      "context_tokens": 304,
+      "content_length": 989,
+      "latency_ms": 28821
+    },
+    {
+      "chapter": 3,
+      "tokens_in": 404,
+      "tokens_out": 800,
+      "context_tokens": 392,
+      "content_length": 2627,
+      "latency_ms": 31301
+    },
+    {
+      "chapter": 4,
+      "tokens_in": 485,
+      "tokens_out": 800,
+      "context_tokens": 479,
+      "content_length": 1738,
+      "latency_ms": 28668
+    },
+    {
+      "chapter": 5,
+      "tokens_in": 567,
+      "tokens_out": 800,
+      "context_tokens": 567,
+      "content_length": 2237,
+      "latency_ms": 37598
+    },
+    {
+      "chapter": 6,
+      "tokens_in": 655,
+      "tokens_out": 800,
+      "context_tokens": 657,
+      "content_length": 2361,
+      "latency_ms": 32543
+    },
+    {
+      "chapter": 7,
+      "tokens_in": 651,
+      "tokens_out": 800,
+      "context_tokens": 656,
+      "content_length": 1873,
+      "latency_ms": 29713
+    },
+    {
+      "chapter": 8,
+      "tokens_in": 646,
+      "tokens_out": 800,
+      "context_tokens": 655,
+      "content_length": 1758,
+      "latency_ms": 29396
+    },
+    {
+      "chapter": 9,
+      "tokens_in": 650,
+      "tokens_out": 800,
+      "context_tokens": 657,
+      "content_length": 962,
+      "latency_ms": 29441
+    },
+    {
+      "chapter": 11,
+      "tokens_in": 650,
+      "tokens_out": 800,
+      "context_tokens": 657,
+      "content_length": 344,
+      "latency_ms": 30470
+    },
+    {
+      "chapter": 12,
+      "tokens_in": 649,
+      "tokens_out": 800,
+      "context_tokens": 655,
+      "content_length": 1842,
+      "latency_ms": 27606
+    },
+    {
+      "chapter": 13,
+      "tokens_in": 659,
+      "tokens_out": 800,
+      "context_tokens": 657,
+      "content_length": 2106,
+      "latency_ms": 31646
+    },
+    {
+      "chapter": 14,
+      "tokens_in": 668,
+      "tokens_out": 800,
+      "context_tokens": 658,
+      "content_length": 2135,
+      "latency_ms": 38498
+    },
+    {
+      "chapter": 15,
+      "tokens_in": 672,
+      "tokens_out": 800,
+      "context_tokens": 657,
+      "content_length": 2525,
+      "latency_ms": 30502
+    },
+    {
+      "chapter": 16,
+      "tokens_in": 682,
+      "tokens_out": 800,
+      "context_tokens": 658,
+      "content_length": 1999,
+      "latency_ms": 30213
+    },
+    {
+      "chapter": 17,
+      "tokens_in": 682,
+      "tokens_out": 800,
+      "context_tokens": 659,
+      "content_length": 708,
+      "latency_ms": 56068
+    },
+    {
+      "chapter": 18,
+      "tokens_in": 681,
+      "tokens_out": 800,
+      "context_tokens": 657,
+      "content_length": 1118,
+      "latency_ms": 29252
+    },
+    {
+      "chapter": 19,
+      "tokens_in": 680,
+      "tokens_out": 800,
+      "context_tokens": 658,
+      "content_length": 2291,
+      "latency_ms": 29175
+    },
+    {
+      "chapter": 20,
+      "tokens_in": 676,
+      "tokens_out": 800,
+      "context_tokens": 658,
+      "content_length": 1678,
+      "latency_ms": 30436
+    },
+    {
+      "chapter": 21,
+      "tokens_in": 670,
+      "tokens_out": 800,
+      "context_tokens": 657,
+      "content_length": 1856,
+      "latency_ms": 27314
+    },
+    {
+      "chapter": 22,
+      "tokens_in": 672,
+      "tokens_out": 800,
+      "context_tokens": 657,
+      "content_length": 1984,
+      "latency_ms": 28610
+    },
+    {
+      "chapter": 23,
+      "tokens_in": 665,
+      "tokens_out": 800,
+      "context_tokens": 657,
+      "content_length": 1838,
+      "latency_ms": 28699
+    },
+    {
+      "chapter": 24,
+      "tokens_in": 661,
+      "tokens_out": 800,
+      "context_tokens": 658,
+      "content_length": 2104,
+      "latency_ms": 29606
+    },
+    {
+      "chapter": 25,
+      "tokens_in": 663,
+      "tokens_out": 800,
+      "context_tokens": 658,
+      "content_length": 2381,
+      "latency_ms": 34063
+    },
+    {
+      "chapter": 26,
+      "tokens_in": 667,
+      "tokens_out": 800,
+      "context_tokens": 658,
+      "content_length": 2505,
+      "latency_ms": 32793
+    },
+    {
+      "chapter": 27,
+      "tokens_in": 667,
+      "tokens_out": 800,
+      "context_tokens": 658,
+      "content_length": 1019,
+      "latency_ms": 31864
+    },
+    {
+      "chapter": 28,
+      "tokens_in": 672,
+      "tokens_out": 800,
+      "context_tokens": 658,
+      "content_length": 2302,
+      "latency_ms": 34027
+    },
+    {
+      "chapter": 29,
+      "tokens_in": 681,
+      "tokens_out": 800,
+      "context_tokens": 657,
+      "content_length": 1749,
+      "latency_ms": 32919
+    },
+    {
+      "chapter": 30,
+      "tokens_in": 680,
+      "tokens_out": 800,
+      "context_tokens": 658,
+      "content_length": 2617,
+      "latency_ms": 28885
+    },
+    {
+      "chapter": 31,
+      "tokens_in": 677,
+      "tokens_out": 800,
+      "context_tokens": 658,
+      "content_length": 2511,
+      "latency_ms": 30435
+    },
+    {
+      "chapter": 32,
+      "tokens_in": 681,
+      "tokens_out": 800,
+      "context_tokens": 658,
+      "content_length": 2547,
+      "latency_ms": 29958
+    },
+    {
+      "chapter": 33,
+      "tokens_in": 680,
+      "tokens_out": 800,
+      "context_tokens": 659,
+      "content_length": 2312,
+      "latency_ms": 28867
+    },
+    {
+      "chapter": 34,
+      "tokens_in": 668,
+      "tokens_out": 800,
+      "context_tokens": 657,
+      "content_length": 2170,
+      "latency_ms": 31699
+    },
+    {
+      "chapter": 35,
+      "tokens_in": 670,
+      "tokens_out": 800,
+      "context_tokens": 656,
+      "content_length": 2345,
+      "latency_ms": 29598
+    },
+    {
+      "chapter": 36,
+      "tokens_in": 674,
+      "tokens_out": 800,
+      "context_tokens": 657,
+      "content_length": 2536,
+      "latency_ms": 30649
+    },
+    {
+      "chapter": 37,
+      "tokens_in": 670,
+      "tokens_out": 800,
+      "context_tokens": 657,
+      "content_length": 2036,
+      "latency_ms": 28451
+    },
+    {
+      "chapter": 38,
+      "tokens_in": 665,
+      "tokens_out": 800,
+      "context_tokens": 656,
+      "content_length": 1609,
+      "latency_ms": 29382
+    },
+    {
+      "chapter": 39,
+      "tokens_in": 672,
+      "tokens_out": 800,
+      "context_tokens": 658,
+      "content_length": 1912,
+      "latency_ms": 30295
+    },
+    {
+      "chapter": 40,
+      "tokens_in": 668,
+      "tokens_out": 800,
+      "context_tokens": 657,
+      "content_length": 2427,
+      "latency_ms": 29236
+    },
+    {
+      "chapter": 41,
+      "tokens_in": 662,
+      "tokens_out": 800,
+      "context_tokens": 656,
+      "content_length": 2220,
+      "latency_ms": 27692
+    },
+    {
+      "chapter": 42,
+      "tokens_in": 659,
+      "tokens_out": 800,
+      "context_tokens": 654,
+      "content_length": 2353,
+      "latency_ms": 28668
+    },
+    {
+      "chapter": 43,
+      "tokens_in": 666,
+      "tokens_out": 800,
+      "context_tokens": 654,
+      "content_length": 2114,
+      "latency_ms": 31872
+    },
+    {
+      "chapter": 44,
+      "tokens_in": 665,
+      "tokens_out": 800,
+      "context_tokens": 654,
+      "content_length": 1991,
+      "latency_ms": 30995
+    },
+    {
+      "chapter": 45,
+      "tokens_in": 674,
+      "tokens_out": 800,
+      "context_tokens": 654,
+      "content_length": 1646,
+      "latency_ms": 29983
+    },
+    {
+      "chapter": 46,
+      "tokens_in": 675,
+      "tokens_out": 800,
+      "context_tokens": 655,
+      "content_length": 2219,
+      "latency_ms": 29043
+    },
+    {
+      "chapter": 47,
+      "tokens_in": 676,
+      "tokens_out": 800,
+      "context_tokens": 655,
+      "content_length": 2352,
+      "latency_ms": 29662
+    },
+    {
+      "chapter": 48,
+      "tokens_in": 668,
+      "tokens_out": 800,
+      "context_tokens": 657,
+      "content_length": 2354,
+      "latency_ms": 31863
+    },
+    {
+      "chapter": 49,
+      "tokens_in": 666,
+      "tokens_out": 800,
+      "context_tokens": 656,
+      "content_length": 1971,
+      "latency_ms": 30197
+    },
+    {
+      "chapter": 50,
+      "tokens_in": 658,
+      "tokens_out": 800,
+      "context_tokens": 659,
+      "content_length": 2066,
+      "latency_ms": 28401
+    },
+    {
+      "chapter": 51,
+      "tokens_in": 661,
+      "tokens_out": 800,
+      "context_tokens": 659,
+      "content_length": 443,
+      "latency_ms": 27008
+    },
+    {
+      "chapter": 52,
+      "tokens_in": 668,
+      "tokens_out": 800,
+      "context_tokens": 659,
+      "content_length": 1744,
+      "latency_ms": 29075
+    },
+    {
+      "chapter": 53,
+      "tokens_in": 669,
+      "tokens_out": 800,
+      "context_tokens": 660,
+      "content_length": 2462,
+      "latency_ms": 38072
+    },
+    {
+      "chapter": 54,
+      "tokens_in": 666,
+      "tokens_out": 800,
+      "context_tokens": 660,
+      "content_length": 1935,
+      "latency_ms": 29166
+    },
+    {
+      "chapter": 55,
+      "tokens_in": 668,
+      "tokens_out": 800,
+      "context_tokens": 658,
+      "content_length": 1829,
+      "latency_ms": 31401
+    },
+    {
+      "chapter": 56,
+      "tokens_in": 665,
+      "tokens_out": 800,
+      "context_tokens": 659,
+      "content_length": 2366,
+      "latency_ms": 29823
+    },
+    {
+      "chapter": 57,
+      "tokens_in": 656,
+      "tokens_out": 800,
+      "context_tokens": 657,
+      "content_length": 1773,
+      "latency_ms": 26579
+    },
+    {
+      "chapter": 58,
+      "tokens_in": 659,
+      "tokens_out": 800,
+      "context_tokens": 656,
+      "content_length": 1857,
+      "latency_ms": 28810
+    },
+    {
+      "chapter": 59,
+      "tokens_in": 666,
+      "tokens_out": 800,
+      "context_tokens": 656,
+      "content_length": 2025,
+      "latency_ms": 27876
+    },
+    {
+      "chapter": 60,
+      "tokens_in": 668,
+      "tokens_out": 800,
+      "context_tokens": 655,
+      "content_length": 2569,
+      "latency_ms": 31600
+    },
+    {
+      "chapter": 61,
+      "tokens_in": 671,
+      "tokens_out": 800,
+      "context_tokens": 655,
+      "content_length": 1625,
+      "latency_ms": 58244
+    },
+    {
+      "chapter": 62,
+      "tokens_in": 682,
+      "tokens_out": 800,
+      "context_tokens": 656,
+      "content_length": 1980,
+      "latency_ms": 28968
+    },
+    {
+      "chapter": 63,
+      "tokens_in": 686,
+      "tokens_out": 800,
+      "context_tokens": 655,
+      "content_length": 2310,
+      "latency_ms": 28962
+    },
+    {
+      "chapter": 64,
+      "tokens_in": 685,
+      "tokens_out": 800,
+      "context_tokens": 656,
+      "content_length": 1624,
+      "latency_ms": 27939
+    },
+    {
+      "chapter": 65,
+      "tokens_in": 678,
+      "tokens_out": 800,
+      "context_tokens": 656,
+      "content_length": 1598,
+      "latency_ms": 28199
+    },
+    {
+      "chapter": 66,
+      "tokens_in": 669,
+      "tokens_out": 800,
+      "context_tokens": 655,
+      "content_length": 1687,
+      "latency_ms": 28446
+    },
+    {
+      "chapter": 67,
+      "tokens_in": 660,
+      "tokens_out": 800,
+      "context_tokens": 655,
+      "content_length": 2306,
+      "latency_ms": 28386
+    },
+    {
+      "chapter": 68,
+      "tokens_in": 658,
+      "tokens_out": 800,
+      "context_tokens": 657,
+      "content_length": 2285,
+      "latency_ms": 27120
+    },
+    {
+      "chapter": 69,
+      "tokens_in": 656,
+      "tokens_out": 800,
+      "context_tokens": 657,
+      "content_length": 2100,
+      "latency_ms": 26635
+    },
+    {
+      "chapter": 70,
+      "tokens_in": 657,
+      "tokens_out": 800,
+      "context_tokens": 657,
+      "content_length": 1475,
+      "latency_ms": 30320
+    },
+    {
+      "chapter": 71,
+      "tokens_in": 665,
+      "tokens_out": 800,
+      "context_tokens": 658,
+      "content_length": 1621,
+      "latency_ms": 26794
+    },
+    {
+      "chapter": 72,
+      "tokens_in": 662,
+      "tokens_out": 800,
+      "context_tokens": 659,
+      "content_length": 2148,
+      "latency_ms": 26898
+    },
+    {
+      "chapter": 73,
+      "tokens_in": 659,
+      "tokens_out": 800,
+      "context_tokens": 658,
+      "content_length": 2275,
+      "latency_ms": 32639
+    },
+    {
+      "chapter": 74,
+      "tokens_in": 663,
+      "tokens_out": 800,
+      "context_tokens": 658,
+      "content_length": 2461,
+      "latency_ms": 29693
+    },
+    {
+      "chapter": 75,
+      "tokens_in": 667,
+      "tokens_out": 800,
+      "context_tokens": 657,
+      "content_length": 2737,
+      "latency_ms": 29048
+    },
+    {
+      "chapter": 76,
+      "tokens_in": 665,
+      "tokens_out": 800,
+      "context_tokens": 657,
+      "content_length": 2406,
+      "latency_ms": 30526
+    },
+    {
+      "chapter": 77,
+      "tokens_in": 669,
+      "tokens_out": 800,
+      "context_tokens": 659,
+      "content_length": 959,
+      "latency_ms": 26421
+    },
+    {
+      "chapter": 78,
+      "tokens_in": 668,
+      "tokens_out": 800,
+      "context_tokens": 658,
+      "content_length": 2644,
+      "latency_ms": 29077
+    },
+    {
+      "chapter": 79,
+      "tokens_in": 664,
+      "tokens_out": 800,
+      "context_tokens": 658,
+      "content_length": 2360,
+      "latency_ms": 27525
+    },
+    {
+      "chapter": 80,
+      "tokens_in": 669,
+      "tokens_out": 800,
+      "context_tokens": 658,
+      "content_length": 2339,
+      "latency_ms": 27844
+    },
+    {
+      "chapter": 81,
+      "tokens_in": 669,
+      "tokens_out": 800,
+      "context_tokens": 658,
+      "content_length": 2434,
+      "latency_ms": 28329
+    },
+    {
+      "chapter": 82,
+      "tokens_in": 664,
+      "tokens_out": 800,
+      "context_tokens": 657,
+      "content_length": 2414,
+      "latency_ms": 32357
+    },
+    {
+      "chapter": 83,
+      "tokens_in": 665,
+      "tokens_out": 800,
+      "context_tokens": 657,
+      "content_length": 1911,
+      "latency_ms": 26362
+    },
+    {
+      "chapter": 84,
+      "tokens_in": 662,
+      "tokens_out": 800,
+      "context_tokens": 657,
+      "content_length": 2565,
+      "latency_ms": 28912
+    },
+    {
+      "chapter": 85,
+      "tokens_in": 658,
+      "tokens_out": 800,
+      "context_tokens": 658,
+      "content_length": 1611,
+      "latency_ms": 27720
+    },
+    {
+      "chapter": 86,
+      "tokens_in": 662,
+      "tokens_out": 800,
+      "context_tokens": 658,
+      "content_length": 1464,
+      "latency_ms": 28413
+    },
+    {
+      "chapter": 87,
+      "tokens_in": 674,
+      "tokens_out": 800,
+      "context_tokens": 657,
+      "content_length": 1631,
+      "latency_ms": 25813
+    },
+    {
+      "chapter": 88,
+      "tokens_in": 673,
+      "tokens_out": 800,
+      "context_tokens": 657,
+      "content_length": 2171,
+      "latency_ms": 28500
+    },
+    {
+      "chapter": 89,
+      "tokens_in": 683,
+      "tokens_out": 800,
+      "context_tokens": 657,
+      "content_length": 2428,
+      "latency_ms": 28480
+    },
+    {
+      "chapter": 90,
+      "tokens_in": 682,
+      "tokens_out": 800,
+      "context_tokens": 656,
+      "content_length": 1942,
+      "latency_ms": 27630
+    },
+    {
+      "chapter": 91,
+      "tokens_in": 683,
+      "tokens_out": 800,
+      "context_tokens": 656,
+      "content_length": 2398,
+      "latency_ms": 29630
+    },
+    {
+      "chapter": 92,
+      "tokens_in": 665,
+      "tokens_out": 800,
+      "context_tokens": 655,
+      "content_length": 2035,
+      "latency_ms": 27687
+    },
+    {
+      "chapter": 93,
+      "tokens_in": 668,
+      "tokens_out": 800,
+      "context_tokens": 655,
+      "content_length": 2145,
+      "latency_ms": 26278
+    },
+    {
+      "chapter": 94,
+      "tokens_in": 660,
+      "tokens_out": 800,
+      "context_tokens": 655,
+      "content_length": 2123,
+      "latency_ms": 26793
+    },
+    {
+      "chapter": 95,
+      "tokens_in": 668,
+      "tokens_out": 800,
+      "context_tokens": 655,
+      "content_length": 2422,
+      "latency_ms": 29590
+    },
+    {
+      "chapter": 96,
+      "tokens_in": 662,
+      "tokens_out": 800,
+      "context_tokens": 654,
+      "content_length": 1739,
+      "latency_ms": 30725
+    },
+    {
+      "chapter": 97,
+      "tokens_in": 677,
+      "tokens_out": 800,
+      "context_tokens": 656,
+      "content_length": 1351,
+      "latency_ms": 28647
+    },
+    {
+      "chapter": 98,
+      "tokens_in": 671,
+      "tokens_out": 800,
+      "context_tokens": 656,
+      "content_length": 1370,
+      "latency_ms": 26194
+    },
+    {
+      "chapter": 99,
+      "tokens_in": 675,
+      "tokens_out": 800,
+      "context_tokens": 657,
+      "content_length": 2110,
+      "latency_ms": 28865
+    },
+    {
+      "chapter": 100,
+      "tokens_in": 658,
+      "tokens_out": 800,
+      "context_tokens": 656,
+      "content_length": 2418,
+      "latency_ms": 28896
+    }
+  ]
+}
