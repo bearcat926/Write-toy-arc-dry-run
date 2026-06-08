@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Novel Workflow — Author Workbench</title>
+<style>
+:root {
+  --bg: #0d1117;
+  --surface: #161b22;
+  --border: #30363d;
+  --text: #c9d1d9;
+  --text-dim: #8b949e;
+  --accent: #58a6ff;
+  --success: #3fb950;
+  --warning: #d29922;
+  --danger: #f85149;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 12px 20px; display: flex; align-items: center; gap: 16px; }
+header h1 { font-size: 18px; font-weight: 600; }
+nav { display: flex; gap: 4px; }
+nav button { background: none; border: 1px solid transparent; color: var(--text-dim); padding: 6px 14px; border-radius: 6px; cursor: pointer; font-size: 13px; transition: all .15s; }
+nav button:hover { color: var(--text); background: rgba(255,255,255,.05); }
+nav button.active { color: var(--accent); border-color: var(--accent); background: rgba(88,166,255,.08); }
+main { max-width: 1200px; margin: 0 auto; padding: 20px; }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 16px; margin-bottom: 16px; }
+.card h3 { font-size: 15px; margin-bottom: 12px; color: var(--accent); }
+.stats { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; }
+.stat { background: rgba(255,255,255,.03); border-radius: 6px; padding: 12px; text-align: center; }
+.stat .value { font-size: 28px; font-weight: 700; color: var(--accent); }
+.stat .label { font-size: 12px; color: var(--text-dim); margin-top: 4px; }
+.chapter-list { max-height: 400px; overflow-y: auto; }
+.chapter-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; border-bottom: 1px solid var(--border); cursor: pointer; transition: background .1s; }
+.chapter-row:hover { background: rgba(255,255,255,.03); }
+.chapter-row .id { font-weight: 600; font-family: monospace; }
+.chapter-row .meta { color: var(--text-dim); font-size: 12px; }
+.badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; }
+.badge-success { background: rgba(63,185,80,.15); color: var(--success); }
+.badge-warning { background: rgba(210,153,34,.15); color: var(--warning); }
+.badge-danger { background: rgba(248,81,73,.15); color: var(--danger); }
+pre { background: rgba(0,0,0,.3); border-radius: 6px; padding: 12px; overflow-x: auto; font-size: 13px; line-height: 1.5; max-height: 500px; overflow-y: auto; }
+.content-view { white-space: pre-wrap; font-family: Georgia, serif; line-height: 1.8; }
+table { width: 100%; border-collapse: collapse; }
+th, td { text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--border); font-size: 13px; }
+th { color: var(--text-dim); font-weight: 600; }
+.loading { color: var(--text-dim); font-size: 13px; padding: 20px; text-align: center; }
+.empty { color: var(--text-dim); text-align: center; padding: 30px; }
+.api-error { color: var(--danger); font-size: 12px; }
+#detail-panel { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 20px; margin-top: 16px; display: none; }
+#detail-title { font-size: 16px; margin-bottom: 12px; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>✍ Novel Workflow</h1>
+  <nav>
+    <button class="active" onclick="showTab('overview', this)">Overview</button>
+    <button onclick="showTab('delivery', this)">Chapter Desk</button>
+    <button onclick="showTab('health', this)">Health</button>
+    <button onclick="showTab('trace', this)">Trace</button>
+    <button onclick="showTab('jobs', this)">Jobs</button>
+    <button onclick="showTab('rollback', this)">Rollback</button>
+  </nav>
+  <span style="margin-left:auto;font-size:11px;color:var(--text-dim)" id="status">Connected</span>
+</header>
+
+<main>
+  <!-- OVERVIEW -->
+  <div id="tab-overview">
+    <div id="overview-stats" class="loading">Loading overview...</div>
+    <div id="overview-chapters"></div>
+  </div>
+
+  <!-- CHAPTER DELIVERY DESK -->
+  <div id="tab-delivery" style="display:none">
+    <div class="card">
+      <h3>Chapter Delivery Desk</h3>
+      <div id="delivery-list" class="loading">Loading chapters...</div>
+    </div>
+  </div>
+
+  <!-- HEALTH -->
+  <div id="tab-health" style="display:none">
+    <div class="card">
+      <h3>Narrative Health</h3>
+      <div id="health-list" class="loading">Loading health reports...</div>
+    </div>
+  </div>
+
+  <!-- TRACE -->
+  <div id="tab-trace" style="display:none">
+    <div class="card">
+      <h3>Retrieval Trace</h3>
+      <p style="color:var(--text-dim);font-size:13px">Select a chapter to view its retrieval trace.</p>
+      <div id="trace-chapter-list" style="margin-top:12px"></div>
+      <div id="trace-detail" style="margin-top:12px"></div>
+    </div>
+  </div>
+
+  <!-- JOBS -->
+  <div id="tab-jobs" style="display:none">
+    <div class="card">
+      <h3>Job Monitor</h3>
+      <div id="jobs-stats" class="loading">Loading job status...</div>
+    </div>
+  </div>
+
+  <!-- ROLLBACK -->
+  <div id="tab-rollback" style="display:none">
+    <div class="card">
+      <h3>Rollback Control</h3>
+      <p style="color:var(--text-dim);font-size:13px">⚠ Rollback is a destructive operation. Confirm before proceeding.</p>
+      <div id="rollback-list" style="margin-top:12px"></div>
+    </div>
+  </div>
+
+  <!-- Detail panel (shared) -->
+  <div id="detail-panel"></div>
+</main>
+
+<script>
+const API = 'http://127.0.0.1:8765';
+
+async function fetchAPI(path) {
+  try {
+    const r = await fetch(API + path);
+    document.getElementById('status').textContent = 'Connected';
+    return await r.json();
+  } catch (e) {
+    document.getElementById('status').textContent = 'API Offline';
+    document.getElementById('status').style.color = 'var(--danger)';
+    return null;
+  }
+}
+
+function showTab(name, btn) {
+  document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('[id^="tab-"]').forEach(d => d.style.display = 'none');
+  document.getElementById('tab-' + name).style.display = 'block';
+  document.getElementById('detail-panel').style.display = 'none';
+
+  if (name === 'overview') loadOverview();
+  if (name === 'delivery') loadDelivery();
+  if (name === 'health') loadHealth();
+  if (name === 'trace') loadTraceList();
+  if (name === 'jobs') loadJobs();
+  if (name === 'rollback') loadChaptersForRollback();
+}
+
+// ======================== Overview ========================
+async function loadOverview() {
+  const data = await fetchAPI('/api/workspace/overview');
+  if (!data) return;
+
+  document.getElementById('overview-stats').innerHTML = `
+    <div class="stats">
+      <div class="stat"><div class="value">${data.total_chapters}</div><div class="label">Chapters</div></div>
+      <div class="stat"><div class="value">${data.arcs.length}</div><div class="label">Arcs</div></div>
+      <div class="stat"><div class="value">${data.total_commits}</div><div class="label">Commits</div></div>
+      <div class="stat"><div class="value">${data.outbox?.total_jobs || 0}</div><div class="label">Jobs</div></div>
+    </div>`;
+
+  let chHtml = '<div class="card"><h3>Chapters</h3><div class="chapter-list">';
+  (data.chapters || []).slice().reverse().slice(0, 20).forEach(ch => {
+    chHtml += `<div class="chapter-row" onclick="viewChapter('${ch.chapter_id}')">
+      <span class="id">${ch.chapter_id}</span>
+      <span class="meta">${ch.char_count} chars</span>
+    </div>`;
+  });
+  chHtml += '</div></div>';
+  document.getElementById('overview-chapters').innerHTML = chHtml;
+
+  let arcHtml = '<div class="card"><h3>Arcs</h3>';
+  (data.arcs || []).forEach(a => {
+    arcHtml += `<div style="padding:8px 0;border-bottom:1px solid var(--border)">
+      <strong>${a.arc_id}</strong> — ${a.drafts} drafts, ${a.proposals} proposals, ${a.gates} gates
+    </div>`;
+  });
+  arcHtml += '</div>';
+  document.getElementById('overview-chapters').innerHTML += arcHtml;
+}
+
+// ======================== Chapter Detail ========================
+async function viewChapter(chapterId) {
+  const data = await fetchAPI('/api/chapters/' + chapterId);
+  if (!data) return;
+
+  document.getElementById('detail-panel').style.display = 'block';
+  document.getElementById('detail-panel').innerHTML = `
+    <h3 id="detail-title">${chapterId} — ${data.char_count} chars</h3>
+    ${data.summary ? `<div class="card"><h3>Summary</h3><div class="content-view">${escapeHtml(data.summary.summary || 'No summary')}</div></div>` : ''}
+    ${data.governance ? `<div class="card"><h3>Governance</h3>
+      <p>Severity: <span class="badge ${data.governance.max_severity === 'hard_pause' ? 'badge-danger' : data.governance.warning_count > 0 ? 'badge-warning' : 'badge-success'}">${data.governance.max_severity || 'none'}</span></p>
+      <p>Warnings: ${data.governance.warning_count || 0}</p>
+      <p>Action: ${data.governance.recommended_action || 'approve'}</p>
+    </div>` : ''}
+    <div class="card"><h3>Content</h3><div class="content-view">${escapeHtml(data.content.substring(0, 2000))}${data.content.length > 2000 ? '...' : ''}</div></div>
+  `;
+}
+
+function escapeHtml(s) { return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+// ======================== Delivery Desk ========================
+async function loadDelivery() {
+  const data = await fetchAPI('/api/workspace/overview');
+  let html = '<div class="chapter-list">';
+  (data?.chapters || []).slice().reverse().forEach(ch => {
+    html += `<div class="chapter-row">
+      <span class="id">${ch.chapter_id}</span>
+      <span class="meta">${ch.char_count} chars</span>
+      <span><button onclick="applyChapter('${ch.chapter_id}')" style="background:var(--success);color:#000;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;font-size:12px">Apply</button></span>
+    </div>`;
+  });
+  html += '</div>';
+  document.getElementById('delivery-list').innerHTML = html;
+}
+
+async function applyChapter(chapterId) {
+  if (!confirm(`Apply chapter ${chapterId}?`)) return;
+  const result = await fetch(API + '/api/chapters/' + chapterId + '/apply', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({
+      arc_id: 'stress_arc',
+      chapter_id: chapterId,
+      author_evidence: 'Workbench user approval — reviewed and verified',
+    }),
+  });
+  const data = await result.json();
+  alert(data.status === 'applied' ? `Chapter ${chapterId} applied!` : 'Error: ' + JSON.stringify(data));
+  loadDelivery();
+}
+
+// ======================== Health ========================
+async function loadHealth() {
+  const data = await fetchAPI('/api/health');
+  if (!data || !data.reports) { document.getElementById('health-list').innerHTML = '<div class="empty">No health reports yet</div>'; return; }
+  let html = '<table><tr><th>Chapter</th><th>Severity</th><th>Warnings</th><th>Action</th></tr>';
+  data.reports.forEach(r => {
+    const cls = r.max_severity === 'hard_pause' ? 'badge-danger' : r.warning_count > 0 ? 'badge-warning' : 'badge-success';
+    html += `<tr>
+      <td>${r.chapter_id}</td>
+      <td><span class="badge ${cls}">${r.max_severity}</span></td>
+      <td>${r.warning_count}</td>
+      <td>${r.recommended_action}</td>
+    </tr>`;
+  });
+  html += '</table>';
+  document.getElementById('health-list').innerHTML = html;
+}
+
+// ======================== Trace ========================
+async function loadTraceList() {
+  const data = await fetchAPI('/api/workspace/overview');
+  let html = '<div class="chapter-list">';
+  (data?.chapters || []).slice().reverse().slice(0, 50).forEach(ch => {
+    html += `<div class="chapter-row" onclick="loadTrace('${ch.chapter_id}')">
+      <span class="id">${ch.chapter_id}</span>
+      <span style="color:var(--accent);cursor:pointer">View Trace</span>
+    </div>`;
+  });
+  html += '</div>';
+  document.getElementById('trace-chapter-list').innerHTML = html;
+}
+
+async function loadTrace(chapterId) {
+  const data = await fetchAPI('/api/traces/' + chapterId);
+  document.getElementById('trace-detail').innerHTML = `<div class="card">
+    <h3>Trace: ${chapterId}</h3>
+    <pre>${data && data.traces ? JSON.stringify(data.traces.slice(-2), null, 2) : 'No traces'}</pre>
+  </div>`;
+}
+
+// ======================== Jobs ========================
+async function loadJobs() {
+  const data = await fetchAPI('/api/jobs');
+  if (!data || data.error) { document.getElementById('jobs-stats').innerHTML = `<div class="empty">Job system unavailable: ${data?.error || ''}</div>`; return; }
+  const s = data.stats || {};
+  const byStatus = s.by_status || {};
+  let html = `<div class="stats">
+    <div class="stat"><div class="value">${s.total_jobs || 0}</div><div class="label">Total</div></div>
+    <div class="stat"><div class="value">${byStatus.pending || 0}</div><div class="label">Pending</div></div>
+    <div class="stat"><div class="value">${byStatus.running || 0}</div><div class="label">Running</div></div>
+    <div class="stat"><div class="value">${byStatus.dead || 0}</div><div class="label">Dead</div></div>
+  </div>`;
+  if ((data.dead || []).length > 0) {
+    html += '<div class="card"><h3>Dead-letter Queue</h3><table><tr><th>Job ID</th><th>Type</th><th>Error</th></tr>';
+    data.dead.forEach(j => { html += `<tr><td>${j.job_id}</td><td>${j.job_type}</td><td style="color:var(--danger)">${(j.last_error||'').substring(0,100)}</td></tr>`; });
+    html += '</table></div>';
+  }
+  document.getElementById('jobs-stats').innerHTML = html;
+}
+
+// ======================== Rollback ========================
+function loadChaptersForRollback() {
+  fetchAPI('/api/workspace/overview').then(data => {
+    let html = '<div class="chapter-list">';
+    (data?.chapters || []).slice().reverse().slice(0, 50).forEach(ch => {
+      html += `<div class="chapter-row">
+        <span class="id">${ch.chapter_id}</span>
+        <span class="meta">${ch.char_count} chars</span>
+        <span><button onclick="rollbackChapter('${ch.chapter_id}')" style="background:var(--danger);color:#fff;border:none;padding:4px 10px;border-radius:4px;cursor:pointer;font-size:12px">Rollback</button></span>
+      </div>`;
+    });
+    html += '</div>';
+    document.getElementById('rollback-list').innerHTML = html;
+  });
+}
+
+async function rollbackChapter(chapterId) {
+  if (!confirm(`⚠ CONFIRM: Rollback chapter ${chapterId}? This is destructive.`)) return;
+  if (!confirm(`⚠ DOUBLE CONFIRM: This will mark ${chapterId} as stale. Continue?`)) return;
+  const result = await fetch(API + '/api/chapters/' + chapterId + '/rollback', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({arc_id: 'stress_arc', chapter_id: chapterId}),
+  });
+  const data = await result.json();
+  alert(JSON.stringify(data));
+  loadChaptersForRollback();
+}
+
+// Init
+loadOverview();
+</script>
+</body>
+</html>

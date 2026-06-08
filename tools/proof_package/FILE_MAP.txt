@@ -1,0 +1,58 @@
+Phase 3 Acceptance Report — 证明材料映射表
+============================================
+
+GitHub源码仓库: https://github.com/bearcat926/Write-toy-arc-dry-run
+审计基线提交: 1951702 (main)
+
+本压缩包内所有文件 = 报告中引用的证明材料。
+报告中的相对路径对应压缩包内同名文件。
+
+---
+
+## 报告 §1 — §24 完成条件证明材料
+
+报告中路径                          → 压缩包内路径
+src/novel_workflow/schemas/manifest.py       → src/manifest.py
+src/novel_workflow/validators/schema_validator.py → src/schema_validator.py
+src/novel_workflow/system_scripts/manifest_manager.py → src/manifest_manager.py
+src/novel_workflow/system_scripts/governance_projection.py → src/governance_projection.py
+src/novel_workflow/schemas/chapter_commit.py → src/chapter_commit.py
+src/novel_workflow/system_scripts/projection_registry.py → src/projection_registry.py
+src/novel_workflow/system_scripts/bm25_retriever.py → src/bm25_retriever.py
+src/novel_workflow/system_scripts/hybrid_retriever.py → src/hybrid_retriever.py
+src/novel_workflow/system_scripts/outbox_store.py → src/outbox_store.py
+src/novel_workflow/system_scripts/mcp_server.py → src/mcp_server.py
+src/novel_workflow/api.py                    → src/api.py
+src/novel_workflow/schemas/retrieval.py      → src/retrieval.py
+src/novel_workflow/pause/pause_detector.py   → src/pause_detector.py
+src/novel_workflow/system_scripts/vector_adapter.py → src/vector_adapter.py
+
+## 报告 §1 安全内核文档
+
+docs/kernel-boundary.md              → docs/kernel-boundary.md
+scripts/scan_forbidden_paths.py      → scripts/scan_forbidden_paths.py
+
+## 报告 §1 作者工作台
+
+tools/workbench.html                 → tools/workbench.html
+
+## 报告 §2 测试基线
+
+docs/phase2_test_baseline.generated.md → docs/phase2_test_baseline.generated.md (674 tests)
+docs/phase3_test_baseline.generated.md → docs/phase3_test_baseline.generated.md (830 tests, +156)
+
+## 报告 §4 100章LLM压力测试
+
+tools/stress_llm_100/stress_results.json → stress_results.json (99 chapters)
+tools/stress_llm_100/token_report.json   → token_report.json (per-chapter tokens)
+
+## 报告 §5 新增测试文件
+
+tests/test_derived_artifact_store.py → tests/test_derived_artifact_store.py (15 tests)
+tests/test_governance_integration.py → tests/test_governance_integration.py (9 tests)
+tests/test_embedding_interrupt.py    → tests/test_embedding_interrupt.py (5 tests)
+
+## 报告 §6 风险验证
+
+tests/helpers.py                     → tests/helpers.py (requires_symlink + has_crewai)
+scripts/run_stress_test.py           → scripts/run_stress_test.py (429退避+checkpoint)
