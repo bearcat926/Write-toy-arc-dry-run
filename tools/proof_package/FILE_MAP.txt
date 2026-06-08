@@ -2,7 +2,7 @@ Phase 3 Acceptance Report — 证明材料映射表 (v2)
 ============================================
 
 GitHub源码仓库: https://github.com/bearcat926/Write-toy-arc-dry-run  
-审计基线提交: b92598d (main)
+审计基线提交: 7cfd9d4 (main)
 
 本压缩包内所有文件 = 报告中引用的证明材料。
 报告中的原始路径与压缩包内路径的映射详见下方。

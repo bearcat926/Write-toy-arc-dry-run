@@ -1,0 +1,49 @@
+{
+  "model": "mimo-v2.5-pro",
+  "total_chapters": 5,
+  "total_tokens_in": 1966,
+  "total_tokens_out": 4000,
+  "total_tokens": 5966,
+  "per_chapter": [
+    {
+      "chapter": 1,
+      "tokens_in": 225,
+      "tokens_out": 800,
+      "context_tokens": 209,
+      "content_length": 2983,
+      "latency_ms": 27292
+    },
+    {
+      "chapter": 2,
+      "tokens_in": 310,
+      "tokens_out": 800,
+      "context_tokens": 303,
+      "content_length": 2356,
+      "latency_ms": 27292
+    },
+    {
+      "chapter": 3,
+      "tokens_in": 396,
+      "tokens_out": 800,
+      "context_tokens": 392,
+      "content_length": 1462,
+      "latency_ms": 29395
+    },
+    {
+      "chapter": 4,
+      "tokens_in": 478,
+      "tokens_out": 800,
+      "context_tokens": 481,
+      "content_length": 2758,
+      "latency_ms": 28490
+    },
+    {
+      "chapter": 5,
+      "tokens_in": 557,
+      "tokens_out": 800,
+      "context_tokens": 570,
+      "content_length": 1526,
+      "latency_ms": 26204
+    }
+  ]
+}

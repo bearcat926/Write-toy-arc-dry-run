@@ -1,0 +1,599 @@
+{
+  "schema_version": "1.0",
+  "events": [
+    {
+      "event_id": "evt_llm_ch_001",
+      "event_type": "chapter_written",
+      "chapter": "ch_001",
+      "description": "LLM-generated chapter 1: Chapter 1: The Price of a Moment"
+    },
+    {
+      "event_id": "evt_llm_ch_002",
+      "event_type": "chapter_written",
+      "chapter": "ch_002",
+      "description": "LLM-generated chapter 2: Chapter 2: Echoes in the Amber"
+    },
+    {
+      "event_id": "evt_llm_ch_003",
+      "event_type": "chapter_written",
+      "chapter": "ch_003",
+      "description": "LLM-generated chapter 3: Chapter 3: The Weight of Glass"
+    },
+    {
+      "event_id": "evt_llm_ch_004",
+      "event_type": "chapter_written",
+      "chapter": "ch_004",
+      "description": "LLM-generated chapter 4: Chapter 4: The Amber's Whisper"
+    },
+    {
+      "event_id": "evt_llm_ch_005",
+      "event_type": "chapter_written",
+      "chapter": "ch_005",
+      "description": "LLM-generated chapter 5: Chapter 5: The Sentinel and the Shadow"
+    },
+    {
+      "event_id": "evt_llm_ch_006",
+      "event_type": "chapter_written",
+      "chapter": "ch_006",
+      "description": "LLM-generated chapter 6: Chapter 6: Ashes on the Wind"
+    },
+    {
+      "event_id": "evt_llm_ch_007",
+      "event_type": "chapter_written",
+      "chapter": "ch_007",
+      "description": "LLM-generated chapter 7: Chapter 7: The Blood Price"
+    },
+    {
+      "event_id": "evt_llm_ch_008",
+      "event_type": "chapter_written",
+      "chapter": "ch_008",
+      "description": "LLM-generated chapter 8: Chapter 8: The Echo of a Fallen Sword"
+    },
+    {
+      "event_id": "evt_llm_ch_009",
+      "event_type": "chapter_written",
+      "chapter": "ch_009",
+      "description": "LLM-generated chapter 9: Chapter 9: The Shattered Veil"
+    },
+    {
+      "event_id": "evt_llm_ch_011",
+      "event_type": "chapter_written",
+      "chapter": "ch_011",
+      "description": "LLM-generated chapter 11: Chapter 11: The Whispering Map"
+    },
+    {
+      "event_id": "evt_llm_ch_012",
+      "event_type": "chapter_written",
+      "chapter": "ch_012",
+      "description": "LLM-generated chapter 12: Chapter 12: The Cartographer's Lament"
+    },
+    {
+      "event_id": "evt_llm_ch_013",
+      "event_type": "chapter_written",
+      "chapter": "ch_013",
+      "description": "LLM-generated chapter 13: Chapter 13: The Memory of Glass"
+    },
+    {
+      "event_id": "evt_llm_ch_014",
+      "event_type": "chapter_written",
+      "chapter": "ch_014",
+      "description": "LLM-generated chapter 14: Chapter 14: The Price of Passage"
+    },
+    {
+      "event_id": "evt_llm_ch_015",
+      "event_type": "chapter_written",
+      "chapter": "ch_015",
+      "description": "LLM-generated chapter 15: Chapter 15: The Shadowed Flotilla"
+    },
+    {
+      "event_id": "evt_llm_ch_016",
+      "event_type": "chapter_written",
+      "chapter": "ch_016",
+      "description": "LLM-generated chapter 16: Chapter 16: The Commander's Gambit"
+    },
+    {
+      "event_id": "evt_llm_ch_017",
+      "event_type": "chapter_written",
+      "chapter": "ch_017",
+      "description": "LLM-generated chapter 17: Chapter 17: The Siren's Silence"
+    },
+    {
+      "event_id": "evt_llm_ch_018",
+      "event_type": "chapter_written",
+      "chapter": "ch_018",
+      "description": "LLM-generated chapter 18: Chapter 18: The Compass of Scars"
+    },
+    {
+      "event_id": "evt_llm_ch_019",
+      "event_type": "chapter_written",
+      "chapter": "ch_019",
+      "description": "LLM-generated chapter 19: Chapter 19: The Glacial Heartbeat"
+    },
+    {
+      "event_id": "evt_llm_ch_020",
+      "event_type": "chapter_written",
+      "chapter": "ch_020",
+      "description": "LLM-generated chapter 20: Chapter 20: The Echo in the Ice"
+    },
+    {
+      "event_id": "evt_llm_ch_021",
+      "event_type": "chapter_written",
+      "chapter": "ch_021",
+      "description": "LLM-generated chapter 21: Chapter 21: The Temporal Fracture"
+    },
+    {
+      "event_id": "evt_llm_ch_022",
+      "event_type": "chapter_written",
+      "chapter": "ch_022",
+      "description": "LLM-generated chapter 22: Chapter 22: The Price of Knowing"
+    },
+    {
+      "event_id": "evt_llm_ch_023",
+      "event_type": "chapter_written",
+      "chapter": "ch_023",
+      "description": "LLM-generated chapter 23: Chapter 23: The Bleeding of Seconds"
+    },
+    {
+      "event_id": "evt_llm_ch_024",
+      "event_type": "chapter_written",
+      "chapter": "ch_024",
+      "description": "LLM-generated chapter 24: Chapter 24: The Weight of Seconds"
+    },
+    {
+      "event_id": "evt_llm_ch_025",
+      "event_type": "chapter_written",
+      "chapter": "ch_025",
+      "description": "LLM-generated chapter 25: Chapter 25: The Lingering Scar"
+    },
+    {
+      "event_id": "evt_llm_ch_026",
+      "event_type": "chapter_written",
+      "chapter": "ch_026",
+      "description": "LLM-generated chapter 26: Chapter 26: Echoes in the Crimson"
+    },
+    {
+      "event_id": "evt_llm_ch_027",
+      "event_type": "chapter_written",
+      "chapter": "ch_027",
+      "description": "LLM-generated chapter 27: Chapter 27: The Sun's Last Grace"
+    },
+    {
+      "event_id": "evt_llm_ch_028",
+      "event_type": "chapter_written",
+      "chapter": "ch_028",
+      "description": "LLM-generated chapter 28: Chapter 28: The Scholar's Gambit"
+    },
+    {
+      "event_id": "evt_llm_ch_029",
+      "event_type": "chapter_written",
+      "chapter": "ch_029",
+      "description": "LLM-generated chapter 29: Chapter 29: The Price of a Heartbeat"
+    },
+    {
+      "event_id": "evt_llm_ch_030",
+      "event_type": "chapter_written",
+      "chapter": "ch_030",
+      "description": "LLM-generated chapter 30: Chapter 30: The Heart's Bargain"
+    },
+    {
+      "event_id": "evt_llm_ch_031",
+      "event_type": "chapter_written",
+      "chapter": "ch_031",
+      "description": "LLM-generated chapter 31: Chapter 31: The Echoes of What Was"
+    },
+    {
+      "event_id": "evt_llm_ch_032",
+      "event_type": "chapter_written",
+      "chapter": "ch_032",
+      "description": "LLM-generated chapter 32: Chapter 32: The Unraveling Thread"
+    },
+    {
+      "event_id": "evt_llm_ch_033",
+      "event_type": "chapter_written",
+      "chapter": "ch_033",
+      "description": "LLM-generated chapter 33: Chapter 33: The Choosing"
+    },
+    {
+      "event_id": "evt_llm_ch_034",
+      "event_type": "chapter_written",
+      "chapter": "ch_034",
+      "description": "LLM-generated chapter 34: Chapter 34: The Sunstrider's Shadow"
+    },
+    {
+      "event_id": "evt_llm_ch_035",
+      "event_type": "chapter_written",
+      "chapter": "ch_035",
+      "description": "LLM-generated chapter 35: Chapter 35: The Burden of the Echo"
+    },
+    {
+      "event_id": "evt_llm_ch_036",
+      "event_type": "chapter_written",
+      "chapter": "ch_036",
+      "description": "LLM-generated chapter 36: Chapter 36: The Frost That Follows"
+    },
+    {
+      "event_id": "evt_llm_ch_037",
+      "event_type": "chapter_written",
+      "chapter": "ch_037",
+      "description": "LLM-generated chapter 37: Chapter 37: The Shattered Lens"
+    },
+    {
+      "event_id": "evt_llm_ch_038",
+      "event_type": "chapter_written",
+      "chapter": "ch_038",
+      "description": "LLM-generated chapter 38: Chapter 38: The Borrowed Dawn"
+    },
+    {
+      "event_id": "evt_llm_ch_039",
+      "event_type": "chapter_written",
+      "chapter": "ch_039",
+      "description": "LLM-generated chapter 39: Chapter 39: A Shard of Tomorrow"
+    },
+    {
+      "event_id": "evt_llm_ch_040",
+      "event_type": "chapter_written",
+      "chapter": "ch_040",
+      "description": "LLM-generated chapter 40: Chapter 40: The Temporal Frost"
+    },
+    {
+      "event_id": "evt_llm_ch_041",
+      "event_type": "chapter_written",
+      "chapter": "ch_041",
+      "description": "LLM-generated chapter 41: Chapter 41: The Vein of Hours"
+    },
+    {
+      "event_id": "evt_llm_ch_042",
+      "event_type": "chapter_written",
+      "chapter": "ch_042",
+      "description": "LLM-generated chapter 42: Chapter 42: The Echoing Fall"
+    },
+    {
+      "event_id": "evt_llm_ch_043",
+      "event_type": "chapter_written",
+      "chapter": "ch_043",
+      "description": "LLM-generated chapter 43: Chapter 43: The Price of Rewind"
+    },
+    {
+      "event_id": "evt_llm_ch_044",
+      "event_type": "chapter_written",
+      "chapter": "ch_044",
+      "description": "LLM-generated chapter 44: Chapter 44: The Unravelled Now"
+    },
+    {
+      "event_id": "evt_llm_ch_045",
+      "event_type": "chapter_written",
+      "chapter": "ch_045",
+      "description": "LLM-generated chapter 45: Chapter 45: The Scholar's Burden"
+    },
+    {
+      "event_id": "evt_llm_ch_046",
+      "event_type": "chapter_written",
+      "chapter": "ch_046",
+      "description": "LLM-generated chapter 46: Chapter 46: The Echoes We Choose"
+    },
+    {
+      "event_id": "evt_llm_ch_047",
+      "event_type": "chapter_written",
+      "chapter": "ch_047",
+      "description": "LLM-generated chapter 47: Chapter 47: The Sentinel¡¯s Shadow"
+    },
+    {
+      "event_id": "evt_llm_ch_048",
+      "event_type": "chapter_written",
+      "chapter": "ch_048",
+      "description": "LLM-generated chapter 48: Chapter 48: The Fraying Path"
+    },
+    {
+      "event_id": "evt_llm_ch_049",
+      "event_type": "chapter_written",
+      "chapter": "ch_049",
+      "description": "LLM-generated chapter 49: Chapter 49: The Weight of Whispered Truths"
+    },
+    {
+      "event_id": "evt_llm_ch_050",
+      "event_type": "chapter_written",
+      "chapter": "ch_050",
+      "description": "LLM-generated chapter 50: Chapter 50: The Choice of Scars"
+    },
+    {
+      "event_id": "evt_llm_ch_051",
+      "event_type": "chapter_written",
+      "chapter": "ch_051",
+      "description": "LLM-generated chapter 51: Chapter 51: The Symphony of Scars"
+    },
+    {
+      "event_id": "evt_llm_ch_052",
+      "event_type": "chapter_written",
+      "chapter": "ch_052",
+      "description": "LLM-generated chapter 52: Chapter 52: The Frost-Witch¡¯s Choice"
+    },
+    {
+      "event_id": "evt_llm_ch_053",
+      "event_type": "chapter_written",
+      "chapter": "ch_053",
+      "description": "LLM-generated chapter 53: Chapter 53: The Silver Thread"
+    },
+    {
+      "event_id": "evt_llm_ch_054",
+      "event_type": "chapter_written",
+      "chapter": "ch_054",
+      "description": "LLM-generated chapter 54: Chapter 54: The Heart¡¯s First Demand"
+    },
+    {
+      "event_id": "evt_llm_ch_055",
+      "event_type": "chapter_written",
+      "chapter": "ch_055",
+      "description": "LLM-generated chapter 55: Chapter 55: The Price of a Pulse"
+    },
+    {
+      "event_id": "evt_llm_ch_056",
+      "event_type": "chapter_written",
+      "chapter": "ch_056",
+      "description": "LLM-generated chapter 56: Chapter 56: The Forgetting"
+    },
+    {
+      "event_id": "evt_llm_ch_057",
+      "event_type": "chapter_written",
+      "chapter": "ch_057",
+      "description": "LLM-generated chapter 57: Chapter 57: The Unravelling Thread"
+    },
+    {
+      "event_id": "evt_llm_ch_058",
+      "event_type": "chapter_written",
+      "chapter": "ch_058",
+      "description": "LLM-generated chapter 58: Chapter 58: The Echo of Ruin"
+    },
+    {
+      "event_id": "evt_llm_ch_059",
+      "event_type": "chapter_written",
+      "chapter": "ch_059",
+      "description": "LLM-generated chapter 59: Chapter 59: The Fracture Between"
+    },
+    {
+      "event_id": "evt_llm_ch_060",
+      "event_type": "chapter_written",
+      "chapter": "ch_060",
+      "description": "LLM-generated chapter 60: Chapter 60: The Whispering Bone"
+    },
+    {
+      "event_id": "evt_llm_ch_061",
+      "event_type": "chapter_written",
+      "chapter": "ch_061",
+      "description": "LLM-generated chapter 61: Chapter 61: The Shard's Allure"
+    },
+    {
+      "event_id": "evt_llm_ch_062",
+      "event_type": "chapter_written",
+      "chapter": "ch_062",
+      "description": "LLM-generated chapter 62: Chapter 62: The Heart's Demand"
+    },
+    {
+      "event_id": "evt_llm_ch_063",
+      "event_type": "chapter_written",
+      "chapter": "ch_063",
+      "description": "LLM-generated chapter 63: Chapter 63: The Price of Knowing"
+    },
+    {
+      "event_id": "evt_llm_ch_064",
+      "event_type": "chapter_written",
+      "chapter": "ch_064",
+      "description": "LLM-generated chapter 64: Chapter 64: The Price of the Path"
+    },
+    {
+      "event_id": "evt_llm_ch_065",
+      "event_type": "chapter_written",
+      "chapter": "ch_065",
+      "description": "LLM-generated chapter 65: Chapter 65: The Heart's Echo"
+    },
+    {
+      "event_id": "evt_llm_ch_066",
+      "event_type": "chapter_written",
+      "chapter": "ch_066",
+      "description": "LLM-generated chapter 66: Chapter 66: The Echoing Ruin"
+    },
+    {
+      "event_id": "evt_llm_ch_067",
+      "event_type": "chapter_written",
+      "chapter": "ch_067",
+      "description": "LLM-generated chapter 67: Chapter 67: The Sculptor and the Clay"
+    },
+    {
+      "event_id": "evt_llm_ch_068",
+      "event_type": "chapter_written",
+      "chapter": "ch_068",
+      "description": "LLM-generated chapter 68: Chapter 68: The Shattered Moment"
+    },
+    {
+      "event_id": "evt_llm_ch_069",
+      "event_type": "chapter_written",
+      "chapter": "ch_069",
+      "description": "LLM-generated chapter 69: Chapter 69: The Weight of a Moment"
+    },
+    {
+      "event_id": "evt_llm_ch_070",
+      "event_type": "chapter_written",
+      "chapter": "ch_070",
+      "description": "LLM-generated chapter 70: Chapter 70: The Price of Refusal"
+    },
+    {
+      "event_id": "evt_llm_ch_071",
+      "event_type": "chapter_written",
+      "chapter": "ch_071",
+      "description": "LLM-generated chapter 71: Chapter 71: The Unraveling Thread"
+    },
+    {
+      "event_id": "evt_llm_ch_072",
+      "event_type": "chapter_written",
+      "chapter": "ch_072",
+      "description": "LLM-generated chapter 72: Chapter 72: The Light That Bends"
+    },
+    {
+      "event_id": "evt_llm_ch_073",
+      "event_type": "chapter_written",
+      "chapter": "ch_073",
+      "description": "LLM-generated chapter 73: Chapter 73: The Anchor of Memory"
+    },
+    {
+      "event_id": "evt_llm_ch_074",
+      "event_type": "chapter_written",
+      "chapter": "ch_074",
+      "description": "LLM-generated chapter 74: Chapter 74: The Scholar's Gambit"
+    },
+    {
+      "event_id": "evt_llm_ch_075",
+      "event_type": "chapter_written",
+      "chapter": "ch_075",
+      "description": "LLM-generated chapter 75: Chapter 75: The Cost of a Moment"
+    },
+    {
+      "event_id": "evt_llm_ch_076",
+      "event_type": "chapter_written",
+      "chapter": "ch_076",
+      "description": "LLM-generated chapter 76: Chapter 76: The Price of All Tomorrows"
+    },
+    {
+      "event_id": "evt_llm_ch_077",
+      "event_type": "chapter_written",
+      "chapter": "ch_077",
+      "description": "LLM-generated chapter 77: Chapter 77: The Unraveling Knot"
+    },
+    {
+      "event_id": "evt_llm_ch_078",
+      "event_type": "chapter_written",
+      "chapter": "ch_078",
+      "description": "LLM-generated chapter 78: Chapter 78: The Obsidian¡¯s Voice"
+    },
+    {
+      "event_id": "evt_llm_ch_079",
+      "event_type": "chapter_written",
+      "chapter": "ch_079",
+      "description": "LLM-generated chapter 79: Chapter 79: The Fractured Hour"
+    },
+    {
+      "event_id": "evt_llm_ch_080",
+      "event_type": "chapter_written",
+      "chapter": "ch_080",
+      "description": "LLM-generated chapter 80: Chapter 80: The Warrior's Choice"
+    },
+    {
+      "event_id": "evt_llm_ch_081",
+      "event_type": "chapter_written",
+      "chapter": "ch_081",
+      "description": "LLM-generated chapter 81: Chapter 81: The Echo in the Glass"
+    },
+    {
+      "event_id": "evt_llm_ch_082",
+      "event_type": "chapter_written",
+      "chapter": "ch_082",
+      "description": "LLM-generated chapter 82: Chapter 82: The Wound in Eternity"
+    },
+    {
+      "event_id": "evt_llm_ch_083",
+      "event_type": "chapter_written",
+      "chapter": "ch_083",
+      "description": "LLM-generated chapter 83: Chapter 83: The Heart's Silence"
+    },
+    {
+      "event_id": "evt_llm_ch_084",
+      "event_type": "chapter_written",
+      "chapter": "ch_084",
+      "description": "LLM-generated chapter 84: Chapter 84: The Price of a Moment"
+    },
+    {
+      "event_id": "evt_llm_ch_085",
+      "event_type": "chapter_written",
+      "chapter": "ch_085",
+      "description": "LLM-generated chapter 85: Chapter 85: The Shattered Vessel"
+    },
+    {
+      "event_id": "evt_llm_ch_086",
+      "event_type": "chapter_written",
+      "chapter": "ch_086",
+      "description": "LLM-generated chapter 86: Chapter 86: The Fracture¡¯s Price"
+    },
+    {
+      "event_id": "evt_llm_ch_087",
+      "event_type": "chapter_written",
+      "chapter": "ch_087",
+      "description": "LLM-generated chapter 87: Chapter 87: Echo of the Makers"
+    },
+    {
+      "event_id": "evt_llm_ch_088",
+      "event_type": "chapter_written",
+      "chapter": "ch_088",
+      "description": "LLM-generated chapter 88: Chapter 88: The Unraveling Past"
+    },
+    {
+      "event_id": "evt_llm_ch_089",
+      "event_type": "chapter_written",
+      "chapter": "ch_089",
+      "description": "LLM-generated chapter 89: Chapter 89: The Bleeding Hour"
+    },
+    {
+      "event_id": "evt_llm_ch_090",
+      "event_type": "chapter_written",
+      "chapter": "ch_090",
+      "description": "LLM-generated chapter 90: Chapter 90: The Commander¡¯s Gambit"
+    },
+    {
+      "event_id": "evt_llm_ch_091",
+      "event_type": "chapter_written",
+      "chapter": "ch_091",
+      "description": "LLM-generated chapter 91: Chapter 91: The Blood-Memory"
+    },
+    {
+      "event_id": "evt_llm_ch_092",
+      "event_type": "chapter_written",
+      "chapter": "ch_092",
+      "description": "LLM-generated chapter 92: Chapter 92: The Unmaking Price"
+    },
+    {
+      "event_id": "evt_llm_ch_093",
+      "event_type": "chapter_written",
+      "chapter": "ch_093",
+      "description": "LLM-generated chapter 93: Chapter 93: The Commander's Vow"
+    },
+    {
+      "event_id": "evt_llm_ch_094",
+      "event_type": "chapter_written",
+      "chapter": "ch_094",
+      "description": "LLM-generated chapter 94: Chapter 94: The Third Shadow"
+    },
+    {
+      "event_id": "evt_llm_ch_095",
+      "event_type": "chapter_written",
+      "chapter": "ch_095",
+      "description": "LLM-generated chapter 95: Chapter 95: The Shattered Oath"
+    },
+    {
+      "event_id": "evt_llm_ch_096",
+      "event_type": "chapter_written",
+      "chapter": "ch_096",
+      "description": "LLM-generated chapter 96: Chapter 96: The Heart's Remonstrance"
+    },
+    {
+      "event_id": "evt_llm_ch_097",
+      "event_type": "chapter_written",
+      "chapter": "ch_097",
+      "description": "LLM-generated chapter 97: Chapter 97: The Bleeding Hour"
+    },
+    {
+      "event_id": "evt_llm_ch_098",
+      "event_type": "chapter_written",
+      "chapter": "ch_098",
+      "description": "LLM-generated chapter 98: Chapter 98: The Tide That Remembers"
+    },
+    {
+      "event_id": "evt_llm_ch_099",
+      "event_type": "chapter_written",
+      "chapter": "ch_099",
+      "description": "LLM-generated chapter 99: Chapter 99: The Memory Sea"
+    },
+    {
+      "event_id": "evt_llm_ch_100",
+      "event_type": "chapter_written",
+      "chapter": "ch_100",
+      "description": "LLM-generated chapter 100: Chapter 100: The Unmade Gate"
+    }
+  ]
+}

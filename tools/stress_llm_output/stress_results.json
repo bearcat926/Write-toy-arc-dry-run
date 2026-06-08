@@ -1,0 +1,114 @@
+{
+  "num_chapters": 5,
+  "api_model": "mimo-v2.5-pro",
+  "api_base_url_used": true,
+  "api_key_configured": true,
+  "chapters": [
+    {
+      "chapter_id": "ch_001",
+      "num": 1,
+      "title": "Chapter 1: Ashes Before Dawn",
+      "status": "success",
+      "tokens_in": 225,
+      "tokens_out": 800,
+      "total_tokens": 1025,
+      "context_tokens": 209,
+      "llm_latency_ms": 27292,
+      "content_length": 2983,
+      "finish_reason": "length"
+    },
+    {
+      "chapter_id": "ch_002",
+      "num": 2,
+      "title": "Chapter 2: The Scholar and the Shadow",
+      "status": "success",
+      "tokens_in": 310,
+      "tokens_out": 800,
+      "total_tokens": 1110,
+      "context_tokens": 303,
+      "llm_latency_ms": 27292,
+      "content_length": 2356,
+      "finish_reason": "length"
+    },
+    {
+      "chapter_id": "ch_003",
+      "num": 3,
+      "title": "Chapter 3: The Fracture of Trust",
+      "status": "success",
+      "tokens_in": 396,
+      "tokens_out": 800,
+      "total_tokens": 1196,
+      "context_tokens": 392,
+      "llm_latency_ms": 29395,
+      "content_length": 1462,
+      "finish_reason": "length"
+    },
+    {
+      "chapter_id": "ch_004",
+      "num": 4,
+      "title": "Chapter 4: The Cartographer's Ghost",
+      "status": "success",
+      "tokens_in": 478,
+      "tokens_out": 800,
+      "total_tokens": 1278,
+      "context_tokens": 481,
+      "llm_latency_ms": 28490,
+      "content_length": 2758,
+      "finish_reason": "length"
+    },
+    {
+      "chapter_id": "ch_005",
+      "num": 5,
+      "title": "Chapter 5: The Weight of Ash",
+      "status": "success",
+      "tokens_in": 557,
+      "tokens_out": 800,
+      "total_tokens": 1357,
+      "context_tokens": 570,
+      "llm_latency_ms": 26204,
+      "content_length": 1526,
+      "finish_reason": "length"
+    }
+  ],
+  "total_tokens_in": 1966,
+  "total_tokens_out": 4000,
+  "total_llm_latency_ms": 138673,
+  "total_apply_ms": 138716,
+  "apply_errors": 0,
+  "llm_errors": 0,
+  "total_elapsed_ms": 138716,
+  "commit_count": 5,
+  "avg_tokens_in": 393,
+  "avg_tokens_out": 800,
+  "avg_llm_latency_ms": 27734,
+  "avg_content_length": 2217,
+  "context_growth": {
+    "first_context_tokens": 209,
+    "last_context_tokens": 570,
+    "growth": 361,
+    "growth_percent": 172.7,
+    "growth_midpoints": [
+      {
+        "chapter": 1,
+        "context_tokens": 209
+      },
+      {
+        "chapter": 2,
+        "context_tokens": 303
+      },
+      {
+        "chapter": 3,
+        "context_tokens": 392
+      },
+      {
+        "chapter": 4,
+        "context_tokens": 481
+      },
+      {
+        "chapter": 5,
+        "context_tokens": 570
+      }
+    ]
+  },
+  "passed": true
+}

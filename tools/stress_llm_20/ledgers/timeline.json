@@ -1,0 +1,11 @@
+{
+  "schema_version": "1.0",
+  "events": [
+    {
+      "event_id": "evt_llm_ch_001",
+      "event_type": "chapter_written",
+      "chapter": "ch_001",
+      "description": "LLM-generated chapter 1: Chapter 1: Ashes of the Sunstrider"
+    }
+  ]
+}
