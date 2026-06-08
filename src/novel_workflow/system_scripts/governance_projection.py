@@ -109,9 +109,13 @@ class GovernanceProjection:
             )
 
     def _generate_report(self, event: ChapterCommitEvent) -> GovernanceReport:
-        """Generate governance report by running all auditors."""
+        """Generate governance report by running all auditors.
+
+        Phase 3: Integrates CharacterBaseline (E-02) and Drift state machine (E-03).
+        """
         from .structured_auditor import StructuredAuditor
         from .character_consistency_engine import CharacterConsistencyEngine
+        from .character_baseline_loader import CharacterBaselineLoader
 
         report = GovernanceReport(
             chapter_id=event.chapter_id,
@@ -131,14 +135,35 @@ class GovernanceProjection:
         report.foreshadow_findings = audit.foreshadow_lifecycle_findings
         report.timeline_conflicts = audit.timeline_conflicts
 
-        # 2. Character Consistency (only if baselines exist)
+        # 2. Character Consistency with Baseline (E-02)
         try:
             engine = CharacterConsistencyEngine(self._root)
-            # Phase A: auditor always returns approve in shadow mode
-            # Full drift detection requires loaded baselines per character
-            # For now, we rely on StructuredAuditor's drift candidates
+            loader = CharacterBaselineLoader(self._root)
+            baselines = loader.load_all_for_arc(arc_id=event.arc_id)
+            if baselines and draft_content:
+                drift_report = engine.check_chapter(
+                    event.arc_id, event.chapter_id, draft_content, baselines
+                )
+                if drift_report and drift_report.findings:
+                    for finding in drift_report.findings:
+                        report.character_drift_findings.append({
+                            "finding_id": finding.finding_id,
+                            "character_id": finding.character_id,
+                            "drift_type": finding.drift_type,
+                            "severity": finding.severity,
+                            "evidence": finding.evidence[:300],
+                        })
+                    # Promote blocking findings (E-03: Drift state machine)
+                    for finding in drift_report.findings:
+                        if finding.severity == "hard_pause":
+                            report.blocking_issues.append({
+                                "source": "character_drift",
+                                "character_id": finding.character_id,
+                                "severity": "hard_pause",
+                                "detail": finding.evidence[:300],
+                            })
         except Exception:
-            pass
+            pass  # Graceful degradation
 
         # 3. Severity assessment
         report.warning_count = (

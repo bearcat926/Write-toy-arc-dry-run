@@ -1,6 +1,7 @@
 """ManifestManager — runtime management for Phase 2 manifest.json.
 
 Handles loading, registering artifacts, marking stale, and atomic save.
+Phase 3 adds: stage_write → promote flow (B-02), DerivedArtifactStoreEntry support.
 """
 import json
 import os
@@ -8,7 +9,8 @@ import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
 
-from ..schemas.manifest import Phase2Manifest, DerivedArtifactEntry
+from ..schemas.manifest import Phase2Manifest, DerivedArtifactEntry, DerivedArtifactStoreEntry
+from ..validators.schema_validator import SchemaValidator
 
 
 MANIFEST_DIR = "workspace/phase2"
@@ -152,3 +154,41 @@ class ManifestManager:
             context_mode="legacy",
             entries=[],
         )
+
+    # ================================================================
+    # Phase 3: Staged Write → Promote flow (B-02)
+    # ================================================================
+
+    def stage_write(self, entry: DerivedArtifactStoreEntry) -> DerivedArtifactStoreEntry:
+        """Stage a new artifact entry (B-02).
+
+        Validates via SchemaValidator, then registers with status='staged'.
+        Does NOT affect active runtime — staged entries are invisible to resolvers.
+        """
+        validator = SchemaValidator()
+        errors = validator.validate_fields("derived_store_entry", entry.model_dump())
+        if errors:
+            raise ValueError(f"Staged write validation failed: {errors}")
+        entry.status = "staged"
+        self.register_artifact(DerivedArtifactEntry(
+            artifact_path=f"workspace/staged/{entry.artifact_id}",
+            artifact_type=entry.artifact_type,
+            content_hash=entry.content_hash,
+            source_artifact_hashes=entry.source_hashes,
+            stale=False,
+        ))
+        return entry
+
+    def promote_staged(self, artifact_id: str) -> bool:
+        """Promote a staged artifact to promoted status (B-02).
+
+        Returns True if promotion succeeded, False if not found or already promoted.
+        """
+        manifest = self.load()
+        staged_path = f"workspace/staged/{artifact_id}"
+        for entry in manifest.entries:
+            if entry.artifact_path == staged_path and not entry.stale:
+                entry.stale = False
+                entry.stale_reason = ""
+                return True
+        return False
